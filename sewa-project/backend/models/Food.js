@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
 const foodSchema = new mongoose.Schema({
-  licenseNo: {
-    type: String,
+  hotelId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Hotel",
     required: true,
   },
   hotelName: {

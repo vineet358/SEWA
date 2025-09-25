@@ -116,56 +116,56 @@ const AddDonation = ({ hotelName, licenseNo }) => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+  
     if (!validateForm()) {
       console.log('Form validation failed:', errors);
       return;
     }
-
-    // Check if hotel credentials are available
-    const currentHotelName = hotelData.hotelName;
-    const currentLicenseNo = hotelData.licenseNo;
-
-    if (!currentHotelName || !currentLicenseNo) {
+  
+    // Fetch hotel info from localStorage
+    const hotelData = JSON.parse(localStorage.getItem('userInfo'));
+    const hotelId = hotelData?.user?.id;
+    const hotelName = hotelData?.user?.hotelName;
+  
+    if (!hotelId || !hotelName) {
       alert('Hotel credentials are missing. Please log in again.');
-      console.error('Missing hotel credentials:', { hotelName: currentHotelName, licenseNo: currentLicenseNo });
+      console.error('Missing hotel credentials:', hotelData);
       return;
     }
-
+  
     setIsSubmitting(true);
-
+  
     try {
-      // Create proper ISO date strings
+      // Convert prep and expiry dates to ISO format
       const preparedAt = new Date(`${formData.prepDate}T${formData.prepTime}`).toISOString();
       const expiryAt = new Date(`${formData.expiryDate}T${formData.expiryTime}`).toISOString();
-
+  
       const payload = {
-        hotelName: currentHotelName,
-        licenseNo: currentLicenseNo,
+        hotelId,
+        hotelName,
         foodType: formData.foodType,
         quantity: Number(formData.quantity),
-        servesPeople: Number(formData.quantity), // Assuming quantity equals serves people
+        servesPeople: Number(formData.quantity),
         description: formData.description || '',
         preparedAt,
         expiryAt,
         pickupAddress: formData.pickupLocation,
-        images: formData.images.map(img => img.split("/").pop()) // Extract filename from blob URL
+        images: formData.images.map(img => img.split("/").pop())
       };
-
+  
       console.log('Sending payload:', payload);
-
+  
       const res = await axios.post("http://localhost:5000/api/food/add", payload, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
-
+  
       console.log('Success response:', res.data);
       setSubmitSuccess(true);
-
+  
       // Reset form after success
       setTimeout(() => {
         setFormData({
@@ -181,12 +181,11 @@ const AddDonation = ({ hotelName, licenseNo }) => {
         });
         setSubmitSuccess(false);
       }, 3000);
-
+  
     } catch (error) {
       console.error('Error submitting donation:', error);
-      
+  
       if (error.response?.data) {
-        // Show server error message
         const errorMessage = error.response.data.message || 'Unknown server error';
         const errorDetails = error.response.data.errors?.join(', ') || '';
         alert(`Error: ${errorMessage}${errorDetails ? ` - ${errorDetails}` : ''}`);
@@ -199,6 +198,9 @@ const AddDonation = ({ hotelName, licenseNo }) => {
       setIsSubmitting(false);
     }
   };
+  
+
+  
 
   if (submitSuccess) {
     return (

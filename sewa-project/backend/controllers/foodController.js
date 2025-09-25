@@ -5,7 +5,7 @@ export const addFood = async (req, res) => {
     console.log("Received request body:", req.body); // Add this for debugging
 
     const {
-      licenseNo,
+     hotelId,
       hotelName,
       foodType,
       quantity,
@@ -18,10 +18,10 @@ export const addFood = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!licenseNo || !hotelName || !foodType || !quantity || !servesPeople || !preparedAt || !expiryAt || !pickupAddress) {
+    if (!hotelId || !hotelName || !foodType || !quantity || !servesPeople || !preparedAt || !expiryAt || !pickupAddress) {
       return res.status(400).json({ 
         message: "Missing required fields",
-        required: ["licenseNo", "hotelName", "foodType", "quantity", "servesPeople", "preparedAt", "expiryAt", "pickupAddress"]
+        required: ["hotelId", "hotelName", "foodType", "quantity", "servesPeople", "preparedAt", "expiryAt", "pickupAddress"]
       });
     }
 
@@ -54,7 +54,7 @@ export const addFood = async (req, res) => {
 
     // Create new food document
     const newFood = new Food({
-      licenseNo,
+      hotelId,
       hotelName,
       foodType,
       quantity: Number(quantity),

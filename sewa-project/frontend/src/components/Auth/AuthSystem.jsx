@@ -237,6 +237,10 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
       if (authMode === 'login' && response.data.token) {
         localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('userType', userType);
+        localStorage.setItem('userInfo', JSON.stringify(response.data.user));
+        const userInfo = { ...response.data };
+  delete userInfo.password; 
+  localStorage.setItem('userInfo', JSON.stringify(userInfo));
       }
       
       setSuccess(true);
