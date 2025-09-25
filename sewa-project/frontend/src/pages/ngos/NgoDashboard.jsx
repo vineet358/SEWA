@@ -30,30 +30,7 @@ const NgoDashboard = () => {
     peopleServed: 0,
     monthlyStats: [45, 52, 48, 61, 55, 67, 72, 68, 75, 82, 78, 85],
     recentActivities: [
-      {
-        id: 1,
-        type: 'donation',
-        title: 'Food Donation from Hotel Paradise',
-        details: '150 servings • Fresh meals',
-        status: 'accepted',
-        date: new Date().toISOString()
-      },
-      {
-        id: 2,
-        type: 'request',
-        title: 'Food Request from Community Center',
-        details: '200 servings • Lunch for children',
-        status: 'pending',
-        date: new Date(Date.now() - 86400000).toISOString()
-      },
-      {
-        id: 3,
-        type: 'distribution',
-        title: 'Food Distribution to Shelter',
-        details: '100 servings • Evening meal',
-        status: 'distributed',
-        date: new Date(Date.now() - 172800000).toISOString()
-      }
+      
     ]
   });
 
@@ -253,3 +230,4 @@ const NgoDashboard = () => {
 };
 
 export default NgoDashboard;
+

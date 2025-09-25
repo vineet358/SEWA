@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import AuthSystem from './components/Auth/AuthSystem';
 import HotelDashboard from './pages/Hotel/Dashboard';
+import NgoDashboard from './pages/ngos/NgoDashboard';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/donate" element={<Home section="Donate" />} />
           <Route path="/about" element={<Home section="About" />} />
           <Route path="/hotel" element={<HotelDashboard />} />
+          <Route path="/ngo" element={<NgoDashboard />} />
         </Routes>
       </div>
     </Router>

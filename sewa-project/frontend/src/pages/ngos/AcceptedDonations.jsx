@@ -17,58 +17,7 @@ const AcceptedDonations = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [donations] = useState([
-    {
-      id: 1,
-      hotelName: 'Hotel Paradise',
-      foodType: 'Fresh Meals',
-      quantity: 150,
-      servings: 150,
-      pickupTime: '2024-01-15T10:00:00Z',
-      status: 'accepted',
-      location: 'Downtown Area',
-      contact: '+1 234-567-8900',
-      description: 'Fresh vegetarian meals prepared this morning',
-      expiryDate: '2024-01-16T18:00:00Z'
-    },
-    {
-      id: 2,
-      hotelName: 'Grand Plaza Hotel',
-      foodType: 'Bread & Pastries',
-      quantity: 200,
-      servings: 200,
-      pickupTime: '2024-01-14T14:30:00Z',
-      status: 'picked-up',
-      location: 'Central District',
-      contact: '+1 234-567-8901',
-      description: 'Freshly baked bread and pastries from breakfast service',
-      expiryDate: '2024-01-15T12:00:00Z'
-    },
-    {
-      id: 3,
-      hotelName: 'Sunset Resort',
-      foodType: 'Buffet Items',
-      quantity: 300,
-      servings: 300,
-      pickupTime: '2024-01-13T16:00:00Z',
-      status: 'distributed',
-      location: 'Beach Area',
-      contact: '+1 234-567-8902',
-      description: 'Leftover buffet items from lunch service',
-      expiryDate: '2024-01-14T20:00:00Z'
-    },
-    {
-      id: 4,
-      hotelName: 'City Center Hotel',
-      foodType: 'Sandwiches',
-      quantity: 100,
-      servings: 100,
-      pickupTime: '2024-01-12T11:00:00Z',
-      status: 'expired',
-      location: 'Business District',
-      contact: '+1 234-567-8903',
-      description: 'Pre-made sandwiches from conference catering',
-      expiryDate: '2024-01-12T18:00:00Z'
-    }
+    
   ]);
 
   const filteredDonations = donations.filter(donation => {
@@ -228,3 +177,4 @@ const AcceptedDonations = () => {
 };
 
 export default AcceptedDonations;
+
