@@ -18,11 +18,10 @@ import './AuthSystem.css';
 import bgImage from '../../assets/food4.jpeg'; 
 import axios from 'axios';
 
-
 const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
   console.log('AuthSystem rendered with initialUserType:', initialUserType);
-  const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
-  const [userType, setUserType] = useState(initialUserType); // 'individual', 'ngo', 'hotel'
+  const [authMode, setAuthMode] = useState('login');
+  const [userType, setUserType] = useState(initialUserType);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +46,7 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
     
     // Hotel fields
     hotelName: '',
-    contactPerson: '',
+    managerName: '', // This should match your backend
     address: '',
     licenseNumber: '',
     
@@ -93,6 +92,14 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
         [name]: ''
       }));
     }
+    
+    // Clear form error when user starts typing
+    if (errors.form) {
+      setErrors(prev => ({
+        ...prev,
+        form: ''
+      }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -129,10 +136,8 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
       if (!formData.phone) {
         newErrors.phone = 'Phone number is required';
       }
-    }
 
-    // User type specific validations
-    if (authMode === 'register') {
+      // User type specific validations for registration
       if (userType === 'individual') {
         if (!formData.name) {
           newErrors.name = 'Name is required';
@@ -154,8 +159,8 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
         if (!formData.hotelName) {
           newErrors.hotelName = 'Hotel name is required';
         }
-        if (!formData.contactPerson) {
-          newErrors.contactPerson = 'Contact person is required';
+        if (!formData.managerName) {
+          newErrors.managerName = 'Manager name is required';
         }
         if (!formData.address) {
           newErrors.address = 'Address is required';
@@ -176,22 +181,64 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setErrors({}); // Clear previous errors
     
     try {
-      let url='';
-      let payload={};
-      if(authMode==='login'){
-        url=`http://localhost:5000/api/auth/${userType}/login`;
-        payload={
+      let url = '';
+      let payload = {};
+      
+      if (authMode === 'login') {
+        url = `http://localhost:5000/api/auth/${userType}/login`;
+        payload = {
           email: formData.email,
           password: formData.password
         };
-      } else if (authMode==='register'){
-        url=`http://localhost:5000/api/auth/${userType}/signup`;
-        payload={...formData};
-      }     
+      } else if (authMode === 'register') {
+        url = `http://localhost:5000/api/auth/${userType}/signup`;
+        
+        // Create payload based on user type
+        if (userType === 'individual') {
+          payload = {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            phone: formData.phone
+          };
+        } else if (userType === 'ngo') {
+          payload = {
+            organizationName: formData.organizationName,
+            contactPerson: formData.contactPerson,
+            email: formData.email,
+            password: formData.password,
+            phone: formData.phone,
+            address: formData.address,
+            licenseNumber: formData.licenseNumber
+          };
+        } else if (userType === 'hotel') {
+          payload = {
+            hotelName: formData.hotelName,
+            managerName: formData.managerName, // Make sure this matches your backend
+            email: formData.email,
+            password: formData.password,
+            phone: formData.phone,
+            address: formData.address,
+            licenseNumber: formData.licenseNumber
+          };
+        }
+      }
+
+      console.log('Sending request to:', url);
+      console.log('Payload:', payload);
+      
       const response = await axios.post(url, payload);
       console.log('Response:', response.data);
+      
+      // Store token if login is successful
+      if (authMode === 'login' && response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+        localStorage.setItem('userType', userType);
+      }
+      
       setSuccess(true);
       
       setTimeout(() => {
@@ -199,6 +246,7 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
         if (authMode === 'register') {
           setAuthMode('login');
         }
+        // Reset form
         setFormData({
           email: '',
           password: '',
@@ -207,6 +255,7 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
           name: '',
           organizationName: '',
           contactPerson: '',
+          managerName: '',
           address: '',
           licenseNumber: '',
           hotelName: '',
@@ -215,9 +264,26 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
         });
       }, 3000);
       
-    }  catch (error) {
-      console.error('Backend error:', error.response?.data || error.message);
-      setErrors({ form: error.response?.data?.message || 'Something went wrong' });
+    } catch (error) {
+      console.error('Backend error:', error);
+      
+      let errorMessage = 'Something went wrong';
+      
+      if (error.response) {
+        // Server responded with error status
+        console.error('Error response:', error.response.data);
+        errorMessage = error.response.data?.message || error.response.data?.error || 'Server error';
+      } else if (error.request) {
+        // Request was made but no response received
+        console.error('No response received:', error.request);
+        errorMessage = 'Unable to connect to server. Please check if the server is running.';
+      } else {
+        // Something else happened
+        console.error('Request error:', error.message);
+        errorMessage = error.message;
+      }
+      
+      setErrors({ form: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -251,6 +317,13 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
     if (authMode === 'login') {
       return (
         <div className="form-fields">
+          {/* Show global form error for login */}
+          {errors.form && (
+            <div className="error-message" style={{ color: "red", marginBottom: "10px", padding: "10px", backgroundColor: "#ffeaea", borderRadius: "5px" }}>
+              {errors.form}
+            </div>
+          )}
+          
           <div className="input-group">
             <Mail size={20} />
             <input
@@ -262,8 +335,6 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
               className={errors.email ? 'error' : ''}
             />
             {errors.email && <span className="error-text">{errors.email}</span>}
-            {errors.form && <p className="error-text">{errors.form}</p>}
-
           </div>
 
           <div className="input-group">
@@ -296,12 +367,11 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
       );
     }
 
-
     return (
       <div className="form-fields">
-        {/* 🔴 Show global form error here */}
+        {/* Show global form error for registration */}
         {errors.form && (
-          <div className="error-message" style={{ color: "red", marginBottom: "10px" }}>
+          <div className="error-message" style={{ color: "red", marginBottom: "10px", padding: "10px", backgroundColor: "#ffeaea", borderRadius: "5px" }}>
             {errors.form}
           </div>
         )}
@@ -344,13 +414,17 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
               <User size={20} />
               <input
                 type="text"
-                name="contactPerson"
-                placeholder="Contact Person"
-                value={formData.contactPerson}
+                name={userType === 'ngo' ? 'contactPerson' : 'managerName'}
+                placeholder={userType === 'ngo' ? 'Contact Person' : 'Manager Name'}
+                value={userType === 'ngo' ? formData.contactPerson : formData.managerName}
                 onChange={handleInputChange}
-                className={errors.contactPerson ? 'error' : ''}
+                className={errors[userType === 'ngo' ? 'contactPerson' : 'managerName'] ? 'error' : ''}
               />
-              {errors.contactPerson && <span className="error-text">{errors.contactPerson}</span>}
+              {errors[userType === 'ngo' ? 'contactPerson' : 'managerName'] && (
+                <span className="error-text">
+                  {errors[userType === 'ngo' ? 'contactPerson' : 'managerName']}
+                </span>
+              )}
             </div>
     
             <div className="input-group">
@@ -365,6 +439,7 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
               />
               {errors.address && <span className="error-text">{errors.address}</span>}
             </div>
+            
             <div className="input-group">
               <FileText size={20} />
               <input
@@ -474,7 +549,7 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
           backgroundPosition: "center",
         }}
       >
-        <div className="auth-overlay"></div> {/* blur overlay */}
+        <div className="auth-overlay"></div>
         
         <div className="auth-card success-card">
           <CheckCircle size={64} className="success-icon" />
@@ -499,7 +574,6 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
         backgroundPosition: "center",
       }}
     >
-      {/* Overlay for blur + dark effect */}
       <div className="auth-overlay"></div>
 
       <div className="auth-card">

@@ -156,7 +156,7 @@ const HotelDashboard = () => {
       case 'dashboard':
         return renderDashboardOverview();
       case 'donate':
-        return <AddDonation />; // or <DonateFood /> depending on your design
+        return <AddDonation  />; 
       case 'history':
         return <MyDonations />;
       case 'analytics':
