@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import './AuthSystem.css';
 import bgImage from '../../assets/food4.jpeg'; 
+import axios from 'axios';
 
 
 const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
@@ -177,12 +178,22 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      let url='';
+      let payload={};
+      if(authMode==='login'){
+        url=`http://localhost:5000/api/auth/${userType}/login`;
+        payload={
+          email: formData.email,
+          password: formData.password
+        };
+      } else if (authMode==='register'){
+        url=`http://localhost:5000/api/auth/${userType}/signup`;
+        payload={...formData};
+      }     
+      const response = await axios.post(url, payload);
+      console.log('Response:', response.data);
       setSuccess(true);
       
-      // Reset form after successful submission
       setTimeout(() => {
         setSuccess(false);
         if (authMode === 'register') {
@@ -204,8 +215,9 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
         });
       }, 3000);
       
-    } catch (error) {
-      console.error('Authentication error:', error);
+    }  catch (error) {
+      console.error('Backend error:', error.response?.data || error.message);
+      setErrors({ form: error.response?.data?.message || 'Something went wrong' });
     } finally {
       setIsLoading(false);
     }
@@ -250,6 +262,8 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
               className={errors.email ? 'error' : ''}
             />
             {errors.email && <span className="error-text">{errors.email}</span>}
+            {errors.form && <p className="error-text">{errors.form}</p>}
+
           </div>
 
           <div className="input-group">
@@ -282,9 +296,16 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
       );
     }
 
-    // Registration form fields
+
     return (
       <div className="form-fields">
+        {/* 🔴 Show global form error here */}
+        {errors.form && (
+          <div className="error-message" style={{ color: "red", marginBottom: "10px" }}>
+            {errors.form}
+          </div>
+        )}
+    
         {userType === 'individual' && (
           <div className="input-group">
             <User size={20} />
@@ -296,10 +317,10 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
               onChange={handleInputChange}
               className={errors.name ? 'error' : ''}
             />
-            {errors.name && <span className="error-text">{errors.name}</span>}
+            {errors.name && <span className="error-text">{errors.name}</span>}  
           </div>
         )}
-
+    
         {(userType === 'ngo' || userType === 'hotel') && (
           <>
             <div className="input-group">
@@ -313,10 +334,12 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
                 className={errors[userType === 'ngo' ? 'organizationName' : 'hotelName'] ? 'error' : ''}
               />
               {errors[userType === 'ngo' ? 'organizationName' : 'hotelName'] && (
-                <span className="error-text">{errors[userType === 'ngo' ? 'organizationName' : 'hotelName']}</span>
+                <span className="error-text">
+                  {errors[userType === 'ngo' ? 'organizationName' : 'hotelName']}
+                </span>
               )}
             </div>
-
+    
             <div className="input-group">
               <User size={20} />
               <input
@@ -329,7 +352,7 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
               />
               {errors.contactPerson && <span className="error-text">{errors.contactPerson}</span>}
             </div>
-
+    
             <div className="input-group">
               <MapPin size={20} />
               <textarea
@@ -342,7 +365,6 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
               />
               {errors.address && <span className="error-text">{errors.address}</span>}
             </div>
-
             <div className="input-group">
               <FileText size={20} />
               <input

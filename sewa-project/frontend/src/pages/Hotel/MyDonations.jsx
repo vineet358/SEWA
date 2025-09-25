@@ -25,86 +25,16 @@ const MyDonations = () => {
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  // Mock data - in real app, this would come from API
+
   useEffect(() => {
     const mockDonations = [
-      {
-        id: 'DON001',
-        date: '2025-09-12',
-        time: '14:30',
-        foodType: 'Vegetarian',
-        quantity: 150,
-        status: 'delivered',
-        ngo: 'Hope Foundation',
-        pickup: 'Grand Plaza Hotel, Main St',
-        prepDate: '2025-09-12',
-        expiry: '2025-09-13 18:00',
-        description: 'Mixed vegetarian meals with rice, dal, vegetables',
-        images: ['/api/placeholder/300/200', '/api/placeholder/300/200']
-      },
-      {
-        id: 'DON002',
-        date: '2025-09-11',
-        time: '16:45',
-        foodType: 'Non-Vegetarian',
-        quantity: 200,
-        status: 'picked-up',
-        ngo: 'Care NGO',
-        pickup: 'Grand Plaza Hotel, Main St',
-        prepDate: '2025-09-11',
-        expiry: '2025-09-12 20:00',
-        description: 'Chicken curry, rice, bread and salad',
-        images: ['/api/placeholder/300/200']
-      },
-      {
-        id: 'DON003',
-        date: '2025-09-10',
-        time: '12:15',
-        foodType: 'Vegan',
-        quantity: 100,
-        status: 'pending',
-        ngo: 'Food Bank',
-        pickup: 'Grand Plaza Hotel, Main St',
-        prepDate: '2025-09-10',
-        expiry: '2025-09-11 15:00',
-        description: 'Vegan pasta with vegetables and salad',
-        images: ['/api/placeholder/300/200', '/api/placeholder/300/200', '/api/placeholder/300/200']
-      },
-      {
-        id: 'DON004',
-        date: '2025-09-09',
-        time: '19:20',
-        foodType: 'Vegetarian',
-        quantity: 75,
-        status: 'expired',
-        ngo: 'Local Shelter',
-        pickup: 'Grand Plaza Hotel, Main St',
-        prepDate: '2025-09-09',
-        expiry: '2025-09-10 12:00',
-        description: 'Traditional Indian thali meals',
-        images: []
-      },
-      {
-        id: 'DON005',
-        date: '2025-09-08',
-        time: '11:30',
-        foodType: 'Non-Vegetarian',
-        quantity: 120,
-        status: 'delivered',
-        ngo: 'Community Kitchen',
-        pickup: 'Grand Plaza Hotel, Main St',
-        prepDate: '2025-09-08',
-        expiry: '2025-09-09 14:00',
-        description: 'Grilled chicken with sides and dessert',
-        images: ['/api/placeholder/300/200']
-      }
     ];
     
     setDonations(mockDonations);
     setFilteredDonations(mockDonations);
   }, []);
 
-  // Filter donations based on search and filters
+
   useEffect(() => {
     let filtered = donations;
 

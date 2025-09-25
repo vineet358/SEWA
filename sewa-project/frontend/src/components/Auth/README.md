@@ -94,3 +94,4 @@ components/Auth/
 ├── AuthSystem.css      # Styling for the auth system
 └── README.md          # This documentation
 ```
+

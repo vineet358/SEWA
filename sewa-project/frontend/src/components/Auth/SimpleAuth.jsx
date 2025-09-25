@@ -107,3 +107,4 @@ const SimpleAuth = ({ userType, onBack }) => {
 };
 
 export default SimpleAuth;
+

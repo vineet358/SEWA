@@ -22,15 +22,13 @@ const HotelDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState({
-    totalDonations: 156,
-    totalServings: 2340,
-    ngosServed: 23,
-    peopleFed: 1890,
+    totalDonations: 0,
+    totalServings: 0,
+    ngosServed: 0,
+    peopleFed: 0,
     monthlyDonations: [45, 52, 48, 61, 55, 67, 72, 68, 75, 82, 78, 85],
     recentDonations: [
-      { id: 'DON001', date: '2025-09-12', quantity: '150 servings', status: 'Picked Up', ngo: 'Hope Foundation' },
-      { id: 'DON002', date: '2025-09-11', quantity: '200 servings', status: 'Delivered', ngo: 'Care NGO' },
-      { id: 'DON003', date: '2025-09-10', quantity: '100 servings', status: 'Pending Pickup', ngo: 'Food Bank' },
+     
     ]
   });
   useEffect(() => {
@@ -64,7 +62,7 @@ const HotelDashboard = () => {
           <div className="stat-content">
             <h3>{dashboardData.totalDonations}</h3>
             <p>Total Donations</p>
-            <span className="stat-trend">+12% this month</span>
+            <span className="stat-trend"></span>
           </div>
         </div>
         
@@ -75,7 +73,7 @@ const HotelDashboard = () => {
           <div className="stat-content">
             <h3>{dashboardData.totalServings.toLocaleString()}</h3>
             <p>Total Servings</p>
-            <span className="stat-trend">+8% this month</span>
+            <span className="stat-trend"></span>
           </div>
         </div>
         
@@ -86,7 +84,7 @@ const HotelDashboard = () => {
           <div className="stat-content">
             <h3>{dashboardData.ngosServed}</h3>
             <p>NGOs Served</p>
-            <span className="stat-trend">+3 new partners</span>
+            <span className="stat-trend"></span>
           </div>
         </div>
         
@@ -97,7 +95,7 @@ const HotelDashboard = () => {
           <div className="stat-content">
             <h3>{dashboardData.peopleFed.toLocaleString()}</h3>
             <p>People Fed</p>
-            <span className="stat-trend">+15% this month</span>
+            <span className="stat-trend"></span>
           </div>
         </div>
       </div>
