@@ -127,8 +127,8 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
   
     // Fetch hotel info from localStorage
     const hotelData = JSON.parse(localStorage.getItem('userInfo'));
-    const hotelId = hotelData?.user?.id;
-    const hotelName = hotelData?.user?.hotelName;
+    const hotelId = hotelData?.hotelId;
+    const hotelName = hotelData?.hotelName;
   
     if (!hotelId || !hotelName) {
       alert('Hotel credentials are missing. Please log in again.');

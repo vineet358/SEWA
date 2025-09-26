@@ -232,17 +232,21 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
       
       const response = await axios.post(url, payload);
       console.log('Response:', response.data);
-      
       // Store token if login is successful
-      if (authMode === 'login' && response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('userType', userType);
-        localStorage.setItem('userInfo', JSON.stringify(response.data.user));
-        const userInfo = { ...response.data };
-  delete userInfo.password; 
-  localStorage.setItem('userInfo', JSON.stringify(userInfo));
-      }
-      
+if (authMode === 'login' && response.data.token) {
+  localStorage.setItem('authToken', response.data.token);
+  localStorage.setItem('userType', userType);
+
+  // Store user/ngo/hotel info based on userType
+  if (userType === 'hotel') {
+    localStorage.setItem('userInfo', JSON.stringify(response.data.hotel));
+  } else if (userType === 'ngo') {
+    localStorage.setItem('userInfo', JSON.stringify(response.data.ngo));
+  } else {
+    localStorage.setItem('userInfo', JSON.stringify(response.data.user));
+  }
+}
+
       setSuccess(true);
       
       setTimeout(() => {

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   Heart, 
   MapPin, 
@@ -16,9 +17,38 @@ import '../../components/CSS/ngos/acceptedDonations.css';
 const AcceptedDonations = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [donations] = useState([
-    
-  ]);
+  const [donations, setDonations] = useState([]);
+
+  const ngoName = JSON.parse(localStorage.getItem('userInfo'))?.organizationName || 'Unknown NGO';
+
+  // Fetch accepted donations from API
+  useEffect(() => {
+    const fetchAcceptedDonations = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/food/accepted/${ngoName}`);
+        const mappedDonations = res.data.donations.map(donation => ({
+          id: donation._id,
+          hotelName: donation.hotelName,
+          foodType: donation.foodType,
+          servings: donation.servesPeople,
+          description: donation.description,
+          location: donation.pickupAddress,
+          pickupTime: donation.preparedAt,
+          expiryDate: donation.expiryAt,
+          status: donation.status,
+          contactPerson: donation.contactPerson || 'N/A',
+          phone: donation.phone || 'N/A',
+          email: donation.email || 'N/A',
+          images: donation.images || []
+        }));
+        setDonations(mappedDonations);
+      } catch (error) {
+        console.error('Error fetching accepted donations:', error);
+      }
+    };
+
+    fetchAcceptedDonations();
+  }, [ngoName]);
 
   const filteredDonations = donations.filter(donation => {
     const matchesSearch = donation.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -177,5 +207,3 @@ const AcceptedDonations = () => {
 };
 
 export default AcceptedDonations;
-
-

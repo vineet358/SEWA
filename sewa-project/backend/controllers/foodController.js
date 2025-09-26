@@ -123,3 +123,69 @@ export const getAvailableDonations=async(req,res)=>{
   }
 };
 
+export const acceptDonation=async(req,res)=>{
+  try{
+    const {id}=req.params;
+    const {ngoName}=req.body;
+    const food = await Food.findOneAndUpdate(
+      {_id:id,status:"available"},
+      {
+        status:"taken",
+        acceptedByNgo:ngoName,
+        acceptedAt:new Date(),
+      },
+      {new:true}
+    );
+    if(!food) return res.status(404).json({message:"Donation not found or already taken"});
+    res.json({
+      message: "Donation accepted successfully",
+      food
+    });
+  } catch (error) {
+    console.error("Error accepting donation:", error);
+    res.status(500).json({
+      message: "Server Error",
+      error: error.message
+    });
+  }
+}
+
+
+export const rejectDonation = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const food = await Food.findOneAndUpdate(
+      { _id: id, status: "available" },
+      { status: "expired" },         
+      { new: true }
+    );
+
+    if (!food) {
+      return res
+        .status(400)
+        .json({ msg: "Food not found or already processed" });
+    }
+
+    res.json({ msg: "Donation rejected", food });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error", error: err.message });
+  }
+};
+
+
+export const getNgoHistory = async (req, res) => {
+  try {
+    const { ngoName } = req.params;
+
+    const history = await Food.find({
+      acceptedByNgo: ngoName,
+      status: "taken",
+    }).sort({ acceptedAt: -1 });
+
+    res.json(history);
+  } catch (err) {
+    res.status(500).json({ msg: "Server error", error: err.message });
+  }
+};
+

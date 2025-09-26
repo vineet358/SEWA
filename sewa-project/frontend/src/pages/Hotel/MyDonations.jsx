@@ -31,7 +31,7 @@ const MyDonations = () => {
   const fetchDonations = async () => {
     try {
       const hotelData = JSON.parse(localStorage.getItem('userInfo'));
-      const hotelId = hotelData?.user?.id;
+      const hotelId = hotelData?.hotelId;
       if (!hotelId) return;
       
       const res = await axios.get(`http://localhost:5000/api/food/history/${hotelId}`);

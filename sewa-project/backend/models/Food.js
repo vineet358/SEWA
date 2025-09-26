@@ -46,11 +46,15 @@ const foodSchema = new mongoose.Schema({
     enum: ["available", "taken", "expired"],
     default: "available",
   },
+  acceptedAt: { type: Date, default: null },
+
   acceptedByNgo: {
     type: String,
     default: null,
   },
 }, { timestamps: true });
+
+
 
 function arrayLimit(val) {
   return val.length <= 4;

@@ -22,11 +22,13 @@ const FoodRequests = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [requests, setRequests] = useState([]);
 
+  const ngoName = JSON.parse(localStorage.getItem('userInfo'))?.organizationName || 'Unknown NGO';
+
   // Fetch requests from API
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/food/available'); // Your API
+        const res = await axios.get('http://localhost:5000/api/food/available'); // API to get available donations
         const mappedRequests = res.data.donations.map(donation => ({
           id: donation._id,
           requesterName: donation.hotelName,
@@ -41,7 +43,7 @@ const FoodRequests = () => {
           status: donation.status,
           phone: donation.phone || 'N/A',
           email: donation.email || 'N/A',
-          urgency: 'medium', // You can calculate based on expiry date if needed
+          urgency: 'medium', // Can calculate dynamically based on expiry date
           dietaryRequirements: donation.dietaryRequirements || '',
           contactPerson: donation.contactPerson || 'N/A',
           images: donation.images
@@ -92,9 +94,28 @@ const FoodRequests = () => {
     }
   };
 
-  const handleStatusChange = (requestId, newStatus) => {
-    console.log(`Changing request ${requestId} status to ${newStatus}`);
-    // Here you can call your backend API to update the status
+  // API call to accept donation
+  const handleAcceptDonation = async (requestId) => {
+    try {
+      const res = await axios.put(`http://localhost:5000/api/food/${requestId}/accept`, { ngoName });
+      // Update local state
+      setRequests(prevRequests => prevRequests.map(req => req.id === requestId ? { ...req, status: 'approved', acceptedByNgo: ngoName } : req));
+      console.log(res.data.message);
+    } catch (error) {
+      console.error('Error accepting donation:', error);
+    }
+  };
+
+  // API call to reject donation
+  const handleRejectDonation = async (requestId) => {
+    try {
+      const res = await axios.put(`http://localhost:5000/api/food/${requestId}/reject`, { ngoName });
+      // Update local state
+      setRequests(prevRequests => prevRequests.map(req => req.id === requestId ? { ...req, status: 'rejected' } : req));
+      console.log(res.data.message);
+    } catch (error) {
+      console.error('Error rejecting donation:', error);
+    }
   };
 
   return (
@@ -222,18 +243,18 @@ const FoodRequests = () => {
               </span>
             </div>
 
-            {request.status === 'pending' && (
+            {request.status === 'available' && (
               <div className="request-actions">
                 <button 
                   className="action-btn approve"
-                  onClick={() => handleStatusChange(request.id, 'approved')}
+                  onClick={() => handleAcceptDonation(request.id)}
                 >
                   <CheckCircle size={16} />
-                  Approve
+                  Accept
                 </button>
                 <button 
                   className="action-btn reject"
-                  onClick={() => handleStatusChange(request.id, 'rejected')}
+                  onClick={() => handleRejectDonation(request.id)}
                 >
                   <XCircle size={16} />
                   Reject
