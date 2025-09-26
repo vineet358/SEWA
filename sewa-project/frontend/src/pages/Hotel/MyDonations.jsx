@@ -15,6 +15,8 @@ import {
   Truck
 } from 'lucide-react';
 import '../../components/CSS/Hotel/MyDonations.css';
+import AddDonation from './AddDonation';
+import axios from 'axios';
 
 const MyDonations = () => {
   const [donations, setDonations] = useState([]);
@@ -25,20 +27,48 @@ const MyDonations = () => {
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  // Extract fetchDonations into a separate function so it can be reused
+  const fetchDonations = async () => {
+    try {
+      const hotelData = JSON.parse(localStorage.getItem('userInfo'));
+      const hotelId = hotelData?.user?.id;
+      if (!hotelId) return;
+      
+      const res = await axios.get(`http://localhost:5000/api/food/history/${hotelId}`);
+      const donationsData = res.data.donations;
+      const mappedDonations = donationsData.map(d => ({
+        id: d._id,
+        foodType: d.foodType,
+        quantity: d.quantity,
+        servesPeople: d.servesPeople,
+        description: d.description,
+        status: d.status,
+        date: d.createdAt,
+        pickupAddress: d.pickupAddress,
+        images: d.images,
+        ngo: d.acceptedByNgo || 'N/A'
+      }));
+
+      setDonations(mappedDonations);
+      setFilteredDonations(mappedDonations);
+    } catch (error) { 
+      console.error("Error fetching donations:", error);
+    }
+  };
 
   useEffect(() => {
-    const mockDonations = [
-    ];
-    
-    setDonations(mockDonations);
-    setFilteredDonations(mockDonations);
+    fetchDonations();
   }, []);
 
+  const handleDonationAdded = () => {
+    console.log("New donation added, refreshing list...");
+    fetchDonations();
+  };
 
   useEffect(() => {
     let filtered = donations;
 
-    // Search filter
+   
     if (searchTerm) {
       filtered = filtered.filter(donation =>
         donation.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -345,6 +375,7 @@ const MyDonations = () => {
           </div>
         </div>
       )}
+      <AddDonation onDonationAdded={handleDonationAdded} />
     </div>
   );
 };

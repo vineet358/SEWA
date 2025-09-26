@@ -2,7 +2,7 @@ import Food from "../models/Food.js";
 
 export const addFood = async (req, res) => {
   try {
-    console.log("Received request body:", req.body); // Add this for debugging
+    console.log("Received request body:", req.body); 
 
     const {
      hotelId,
@@ -17,42 +17,33 @@ export const addFood = async (req, res) => {
       images
     } = req.body;
 
-    // Validate required fields
+
     if (!hotelId || !hotelName || !foodType || !quantity || !servesPeople || !preparedAt || !expiryAt || !pickupAddress) {
       return res.status(400).json({ 
         message: "Missing required fields",
         required: ["hotelId", "hotelName", "foodType", "quantity", "servesPeople", "preparedAt", "expiryAt", "pickupAddress"]
       });
     }
-
-    // Convert to Date objects properly
     const preparedDate = new Date(preparedAt);
     const expiryDate = new Date(expiryAt);
     const currentDate = new Date();
 
-    console.log("Dates:", { preparedDate, expiryDate, currentDate }); // Add this for debugging
-
-    // Validate dates
     if (isNaN(preparedDate.getTime()) || isNaN(expiryDate.getTime())) {
       return res.status(400).json({ message: "Invalid date format" });
     }
 
-    // Check if expiry is after preparation
     if (expiryDate <= preparedDate) {
       return res.status(400).json({ message: "Best Before must be after Preparation time" });
     }
-
-    // Check if food hasn't already expired
     if (expiryDate <= currentDate) {
       return res.status(400).json({ message: "Food has already expired" });
     }
 
-    // Validate images
     if (images && images.length > 4) {
       return res.status(400).json({ message: "Maximum 4 images allowed" });
     }
 
-    // Create new food document
+
     const newFood = new Food({
       hotelId,
       hotelName,
@@ -67,7 +58,7 @@ export const addFood = async (req, res) => {
     });
 
     const savedFood = await newFood.save();
-    console.log("Food saved successfully:", savedFood); // Add this for debugging
+    console.log("Food saved successfully:", savedFood); 
 
     res.status(201).json({ 
       message: "Food availability added successfully", 
@@ -75,9 +66,9 @@ export const addFood = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error in addFood controller:", error); // Add this for debugging
+    console.error("Error in addFood controller:", error);
     
-    // Handle mongoose validation errors
+
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({ 
@@ -85,11 +76,50 @@ export const addFood = async (req, res) => {
         errors: validationErrors 
       });
     }
-
-    // Handle other errors
-    res.status(500).json({ 
+  res.status(500).json({ 
       message: "Server Error", 
       error: error.message 
     });
   }
+}
+
+
+export const getDonationHistory = async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+
+    if (!hotelId) {
+      return res.status(400).json({ message: "Hotel ID is required" });
+    }
+
+    const donations = await Food.find({ hotelId }).sort({ createdAt: -1 }); 
+
+    res.json({
+      message: "Donation history fetched successfully",
+      donations
+    });
+  } catch (error) {
+    console.error("Error fetching donation history:", error);
+    res.status(500).json({
+      message: "Server Error",
+      error: error.message
+    });
+  }
 };
+
+export const getAvailableDonations=async(req,res)=>{
+  try{
+    const donations=await Food.find({status:"available"}).sort({createdAt:-1});
+    res.json({
+      message:"Available donations fetched successfully",
+      donations
+    });
+  } catch(error){
+    console.error("Error fetching available donations:", error);
+    res.status(500).json({
+      message:"Server Error",
+      error:error.message
+    });
+  }
+};
+

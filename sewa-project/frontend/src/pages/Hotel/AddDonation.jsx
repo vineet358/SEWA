@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import '../../components/CSS/Hotel/AddDonations.css';
 
-const AddDonation = ({ hotelName, licenseNo }) => {
+const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
   const [formData, setFormData] = useState({
     foodType: '',
     quantity: '',
@@ -116,6 +116,7 @@ const AddDonation = ({ hotelName, licenseNo }) => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -165,6 +166,12 @@ const AddDonation = ({ hotelName, licenseNo }) => {
   
       console.log('Success response:', res.data);
       setSubmitSuccess(true);
+
+      // 🚀 THIS IS THE KEY ADDITION: Call the callback to refresh donations list
+      if (onDonationAdded && typeof onDonationAdded === 'function') {
+        console.log('Calling onDonationAdded callback to refresh donations list...');
+        onDonationAdded();
+      }
   
       // Reset form after success
       setTimeout(() => {
@@ -198,9 +205,6 @@ const AddDonation = ({ hotelName, licenseNo }) => {
       setIsSubmitting(false);
     }
   };
-  
-
-  
 
   if (submitSuccess) {
     return (

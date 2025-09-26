@@ -160,7 +160,7 @@ const HotelDashboard = () => {
       case 'history':
         return <MyDonations />;
       case 'analytics':
-        return <Reports />; // since Reports.jsx is already there
+        return <Reports />; // 
     
       default:
         return renderDashboardOverview();
