@@ -9,6 +9,8 @@ import individualAuth from "./routes/AuthIndividual.js";
 import ngoAuth from "./routes/authNgo.js";
 import hotelAuth from "./routes/authHotel.js";
 import foodRoutes from "./routes/foodRoutes.js";
+import hotelDashboardRoutes from "./routes/hotelDashboard.js";
+
 
 
 const app = express();
@@ -19,6 +21,8 @@ app.use("/api/auth/individual", individualAuth);
 app.use("/api/auth/ngo", ngoAuth);
 app.use("/api/auth/hotel", hotelAuth);
 app.use("/api/food",foodRoutes);
+app.use("/api/hotel", hotelDashboardRoutes);
+
 
 
 

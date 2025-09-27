@@ -7,12 +7,12 @@ import {
   Heart, 
   CheckCircle, 
   XCircle,
-  AlertCircle,
   Filter,
   Search,
   Calendar,
   Phone,
   Mail,
+  AlertCircle,
   User
 } from 'lucide-react';
 import '../../components/CSS/ngos/foodRequests.css';
@@ -24,30 +24,37 @@ const FoodRequests = () => {
 
   const ngoName = JSON.parse(localStorage.getItem('userInfo'))?.organizationName || 'Unknown NGO';
 
-  // Fetch requests from API
+  // Fetch all available donations (food requests)
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/food/available'); // API to get available donations
-        const mappedRequests = res.data.donations.map(donation => ({
-          id: donation._id,
-          requesterName: donation.hotelName,
-          foodType: donation.foodType,
-          servings: donation.servesPeople,
-          description: donation.description,
-          location: donation.pickupAddress,
-          preparedAt: donation.preparedAt,
-          expiryAt: donation.expiryAt,
-          neededBy: donation.expiryAt,
-          requestDate: donation.createdAt,
-          status: donation.status,
-          phone: donation.phone || 'N/A',
-          email: donation.email || 'N/A',
-          urgency: 'medium', // Can calculate dynamically based on expiry date
-          dietaryRequirements: donation.dietaryRequirements || '',
-          contactPerson: donation.contactPerson || 'N/A',
-          images: donation.images
-        }));
+        const res = await axios.get('http://localhost:5000/api/food/available');
+        const mappedRequests = res.data.donations.map(donation => {
+          const expiryDate = new Date(donation.expiryAt);
+          const currentDate = new Date();
+          let urgency = 'low';
+          const hoursLeft = (expiryDate - currentDate) / (1000 * 60 * 60);
+          if (hoursLeft <= 2) urgency = 'high';
+          else if (hoursLeft <= 12) urgency = 'medium';
+
+          return {
+            id: donation._id,
+            hotelName: donation.hotelName,
+            foodType: donation.foodType,
+            servings: donation.servesPeople,
+            description: donation.description,
+            location: donation.pickupAddress,
+            preparedAt: donation.preparedAt,
+            expiryAt: donation.expiryAt,
+            requestDate: donation.createdAt,
+            status: donation.status, // available / taken / expired
+            phone: donation.phone || 'N/A',
+            email: donation.email || 'N/A',
+            contactPerson: donation.contactPerson || 'N/A',
+            urgency,
+            images: donation.images || []
+          };
+        });
         setRequests(mappedRequests);
       } catch (error) {
         console.error('Error fetching requests:', error);
@@ -57,30 +64,37 @@ const FoodRequests = () => {
     fetchRequests();
   }, []);
 
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = request.requesterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          request.foodType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          request.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || request.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'pending': return <Clock size={16} className="status-icon pending" />;
-      case 'approved': return <CheckCircle size={16} className="status-icon approved" />;
-      case 'fulfilled': return <Heart size={16} className="status-icon fulfilled" />;
-      case 'rejected': return <XCircle size={16} className="status-icon rejected" />;
-      default: return <Clock size={16} className="status-icon" />;
+  const handleAcceptDonation = async (requestId) => {
+    try {
+      await axios.put(`http://localhost:5000/api/food/${requestId}/accept`, { ngoName });
+      setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'taken' } : r));
+    } catch (error) {
+      console.error('Error accepting donation:', error);
     }
   };
 
+  const handleRejectDonation = async (requestId) => {
+    try {
+      await axios.put(`http://localhost:5000/api/food/${requestId}/reject`);
+      setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'expired' } : r));
+    } catch (error) {
+      console.error('Error rejecting donation:', error);
+    }
+  };
+
+  const filteredRequests = requests.filter(r => {
+    const matchesSearch = r.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          r.foodType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          r.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || r.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
+
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return '#f59e0b';
-      case 'approved': return '#10b981';
-      case 'fulfilled': return '#8b5cf6';
-      case 'rejected': return '#ef4444';
+      case 'available': return '#f59e0b';
+      case 'taken': return '#10b981';
+      case 'expired': return '#ef4444';
       default: return '#64748b';
     }
   };
@@ -94,30 +108,6 @@ const FoodRequests = () => {
     }
   };
 
-  // API call to accept donation
-  const handleAcceptDonation = async (requestId) => {
-    try {
-      const res = await axios.put(`http://localhost:5000/api/food/${requestId}/accept`, { ngoName });
-      // Update local state
-      setRequests(prevRequests => prevRequests.map(req => req.id === requestId ? { ...req, status: 'approved', acceptedByNgo: ngoName } : req));
-      console.log(res.data.message);
-    } catch (error) {
-      console.error('Error accepting donation:', error);
-    }
-  };
-
-  // API call to reject donation
-  const handleRejectDonation = async (requestId) => {
-    try {
-      const res = await axios.put(`http://localhost:5000/api/food/${requestId}/reject`, { ngoName });
-      // Update local state
-      setRequests(prevRequests => prevRequests.map(req => req.id === requestId ? { ...req, status: 'rejected' } : req));
-      console.log(res.data.message);
-    } catch (error) {
-      console.error('Error rejecting donation:', error);
-    }
-  };
-
   return (
     <div className="food-requests">
       <div className="requests-header">
@@ -125,21 +115,18 @@ const FoodRequests = () => {
           <h1>Food Requests</h1>
           <p>Review and manage food requests from hotels</p>
         </div>
+
         <div className="header-stats">
           <div className="stat-item">
             <span className="stat-number">{requests.length}</span>
             <span className="stat-label">Total Requests</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">
-              {requests.filter(r => r.status === 'pending').length}
-            </span>
+            <span className="stat-number">{requests.filter(r => r.status === 'available').length}</span>
             <span className="stat-label">Pending</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">
-              {requests.reduce((sum, r) => sum + r.servings, 0)}
-            </span>
+            <span className="stat-number">{requests.reduce((sum, r) => sum + r.servings, 0)}</span>
             <span className="stat-label">Total Servings</span>
           </div>
         </div>
@@ -153,46 +140,38 @@ const FoodRequests = () => {
               type="text"
               placeholder="Search requests..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
-        
+
         <div className="filter-section">
           <div className="filter-dropdown">
             <Filter size={16} />
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
               <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="fulfilled">Fulfilled</option>
-              <option value="rejected">Rejected</option>
+              <option value="available">Available</option>
+              <option value="taken">Accepted</option>
+              <option value="expired">Rejected/Expired</option>
             </select>
           </div>
         </div>
       </div>
 
       <div className="requests-grid">
-        {filteredRequests.map((request) => (
-          <div key={request.id} className="request-card">
+        {filteredRequests.map(r => (
+          <div key={r.id} className="request-card">
             <div className="request-header">
               <div className="requester-info">
                 <User size={20} />
                 <div>
-                  <h3>{request.requesterName}</h3>
-                  <p>Contact: {request.contactPerson}</p>
+                  <h3>{r.hotelName}</h3>
+                  <p>Contact: {r.contactPerson}</p>
                 </div>
               </div>
               <div className="request-status">
-                {getStatusIcon(request.status)}
-                <span 
-                  className="status-text"
-                  style={{ color: getStatusColor(request.status) }}
-                >
-                  {request.status.toUpperCase()}
+                <span className="status-text" style={{ color: getStatusColor(r.status) }}>
+                  {r.status.toUpperCase()}
                 </span>
               </div>
             </div>
@@ -200,79 +179,51 @@ const FoodRequests = () => {
             <div className="request-details">
               <div className="detail-row">
                 <Heart size={16} />
-                <span>{request.foodType} - {request.servings} servings</span>
+                <span>{r.foodType} - {r.servings} servings</span>
               </div>
               <div className="detail-row">
                 <MapPin size={16} />
-                <span>{request.location}</span>
+                <span>{r.location}</span>
               </div>
               <div className="detail-row">
                 <Clock size={16} />
-                <span>Needed by: {new Date(request.neededBy).toLocaleString()}</span>
+                <span>Pickup: {new Date(r.preparedAt).toLocaleString()}</span>
               </div>
               <div className="detail-row">
                 <Calendar size={16} />
-                <span>Requested: {new Date(request.requestDate).toLocaleString()}</span>
+                <span>Expires: {new Date(r.expiryAt).toLocaleString()}</span>
               </div>
             </div>
 
             <div className="request-description">
-              <p>{request.description}</p>
-              {request.dietaryRequirements && (
-                <div className="dietary-requirements">
-                  <strong>Dietary Requirements:</strong> {request.dietaryRequirements}
-                </div>
-              )}
+              <p>{r.description}</p>
             </div>
 
             <div className="contact-info">
               <div className="contact-item">
                 <Phone size={14} />
-                <span>{request.phone}</span>
+                <span>{r.phone}</span>
               </div>
               <div className="contact-item">
                 <Mail size={14} />
-                <span>{request.email}</span>
+                <span>{r.email}</span>
               </div>
             </div>
 
             <div className="urgency-badge">
               <AlertCircle size={14} />
-              <span style={{ color: getUrgencyColor(request.urgency) }}>
-                {request.urgency.toUpperCase()} PRIORITY
+              <span style={{ color: getUrgencyColor(r.urgency) }}>
+                {r.urgency.toUpperCase()} PRIORITY
               </span>
             </div>
 
-            {request.status === 'available' && (
+            {r.status === 'available' && (
               <div className="request-actions">
-                <button 
-                  className="action-btn approve"
-                  onClick={() => handleAcceptDonation(request.id)}
-                >
-                  <CheckCircle size={16} />
-                  Accept
+                <button className="action-btn approve" onClick={() => handleAcceptDonation(r.id)}>
+                  <CheckCircle size={16} /> Accept
                 </button>
-                <button 
-                  className="action-btn reject"
-                  onClick={() => handleRejectDonation(request.id)}
-                >
-                  <XCircle size={16} />
-                  Reject
-                </button>
-              </div>
-            )}
-
-            {request.status === 'approved' && (
-              <div className="request-actions">
-                <button 
-                  className="action-btn fulfill"
-                  onClick={() => handleStatusChange(request.id, 'fulfilled')}
-                >
-                  <Heart size={16} />
-                  Mark as Fulfilled
-                </button>
-                <button className="action-btn secondary">
-                  Contact Requester
+                <button className="action-btn reject" onClick={() => handleRejectDonation(r.id)}>
+                  <XCircle size={16} /> Reject
                 </button>
               </div>
             )}
@@ -284,7 +235,7 @@ const FoodRequests = () => {
         <div className="no-requests">
           <Users size={48} />
           <h3>No requests found</h3>
-          <p>Try adjusting your search or filter criteria</p>
+          <p>Try adjusting search or filters</p>
         </div>
       )}
     </div>

@@ -7,18 +7,15 @@ import {
   User, 
   Menu, 
   X,
-  TrendingUp,
-  Building,
-  Calendar,
   CheckCircle,
-  Clock,
-  MapPin
+  Building
 } from 'lucide-react';
 import '../../components/CSS/ngos/NgoDashboard.css';
 import AcceptedDonations from "./AcceptedDonations";
 import FoodRequests from "./FoodRequests";
 import Reports from "./Reports";
 import ProfileSettings from "./ProfileSettings";
+import axios from 'axios';
 
 const NgoDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -28,15 +25,35 @@ const NgoDashboard = () => {
     totalRequests: 0,
     totalDistributions: 0,
     peopleServed: 0,
-    monthlyStats: [45, 52, 48, 61, 55, 67, 72, 68, 75, 82, 78, 85],
-    recentActivities: [
-      
-    ]
   });
+
+  const ngoName = JSON.parse(localStorage.getItem('userInfo'))?.organizationName || 'Unknown NGO';
 
   useEffect(() => {
     setSidebarOpen(false); 
-  }, []);
+    fetchDashboardData();
+  }, [ngoName]);
+
+  // Fetch NGO-specific dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/food/ngo/history/${ngoName}`);
+      const donations = res.data;
+
+      const totalDonations = donations.length;
+      const totalDistributions = donations.filter(d => d.status === 'taken' || d.status === 'distributed').length;
+      const peopleServed = donations.reduce((sum, d) => sum + d.servesPeople, 0);
+
+      setDashboardData({
+        totalDonations,
+        totalRequests: 0, // You can fetch requests from API if you have that endpoint
+        totalDistributions,
+        peopleServed,
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
 
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -46,9 +63,7 @@ const NgoDashboard = () => {
     { id: 'profile', label: 'Profile Settings', icon: User },
   ];
 
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  const handleSidebarToggle = () => setSidebarOpen(!sidebarOpen);
 
   const renderDashboardOverview = () => (
     <div className="ngo-dashboard-content">
@@ -65,7 +80,6 @@ const NgoDashboard = () => {
           <div className="ngo-stat-content">
             <h3>{dashboardData.totalDonations}</h3>
             <p>Accepted Donations</p>
-            <span className="ngo-stat-trend"></span>
           </div>
         </div>
         
@@ -76,7 +90,6 @@ const NgoDashboard = () => {
           <div className="ngo-stat-content">
             <h3>{dashboardData.totalRequests}</h3>
             <p>Food Requests</p>
-            <span className="ngo-stat-trend"></span>
           </div>
         </div>
         
@@ -87,7 +100,6 @@ const NgoDashboard = () => {
           <div className="ngo-stat-content">
             <h3>{dashboardData.totalDistributions}</h3>
             <p>Distributions</p>
-            <span className="ngo-stat-trend"></span>
           </div>
         </div>
         
@@ -98,56 +110,6 @@ const NgoDashboard = () => {
           <div className="ngo-stat-content">
             <h3>{dashboardData.peopleServed.toLocaleString()}</h3>
             <p>People Served</p>
-            <span className="ngo-stat-trend"></span>
-          </div>
-        </div>
-      </div>
-
-      <div className="ngo-dashboard-cards">
-        <div className="ngo-dashboard-card recent-activity">
-          <h3>Recent Activities</h3>
-          <div className="ngo-activity-list">
-            {dashboardData.recentActivities.map((activity) => (
-              <div key={activity.id} className="ngo-activity-item">
-                <div className="ngo-activity-info">
-                  <p className="ngo-activity-title">{activity.title}</p>
-                  <p className="ngo-activity-details">{activity.details}</p>
-                </div>
-                <div className="ngo-activity-meta">
-                  <span className={`ngo-status ${activity.status}`}>
-                    {activity.status}
-                  </span>
-                  <span className="ngo-activity-date">{new Date(activity.date).toLocaleDateString()}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="ngo-dashboard-card quick-actions">
-          <h3>Quick Actions</h3>
-          <div className="ngo-action-buttons">
-            <button 
-              className="ngo-action-btn primary"
-              onClick={() => setActiveTab('donations')}
-            >
-              <Heart size={20} />
-              View Donations
-            </button>
-            <button 
-              className="ngo-action-btn secondary"
-              onClick={() => setActiveTab('requests')}
-            >
-              <Users size={20} />
-              Manage Requests
-            </button>
-            <button 
-              className="ngo-action-btn secondary"
-              onClick={() => setActiveTab('analytics')}
-            >
-              <BarChart3 size={20} />
-              View Reports
-            </button>
           </div>
         </div>
       </div>
@@ -156,18 +118,12 @@ const NgoDashboard = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return renderDashboardOverview();
-      case 'donations':
-        return <AcceptedDonations />;
-      case 'requests':
-        return <FoodRequests />;
-      case 'analytics':
-        return <Reports />;
-      case 'profile':
-        return <ProfileSettings />;
-      default:
-        return renderDashboardOverview();
+      case 'dashboard': return renderDashboardOverview();
+      case 'donations': return <AcceptedDonations />;
+      case 'requests': return <FoodRequests />;
+      case 'analytics': return <Reports />;
+      case 'profile': return <ProfileSettings />;
+      default: return renderDashboardOverview();
     }
   };
 
@@ -212,7 +168,7 @@ const NgoDashboard = () => {
           <div className="ngo-topbar-actions">
             <div className="ngo-user-profile">
               <div className="ngo-user-avatar">N</div>
-              <span>NGO Partner</span>
+              <span>{ngoName}</span>
             </div>
           </div>
         </div>
@@ -230,5 +186,3 @@ const NgoDashboard = () => {
 };
 
 export default NgoDashboard;
-
-

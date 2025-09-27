@@ -12,11 +12,11 @@ import {
   Building,
   Calendar
 } from 'lucide-react';
+import axios from 'axios';
 import '../../components/CSS/Hotel/Dashboard.css';
 import AddDonation from "./AddDonation";
 import MyDonations from "./MyDonations";
 import Reports from "./Reports";
-
 
 const HotelDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -26,14 +26,26 @@ const HotelDashboard = () => {
     totalServings: 0,
     ngosServed: 0,
     peopleFed: 0,
-    monthlyDonations: [45, 52, 48, 61, 55, 67, 72, 68, 75, 82, 78, 85],
-    recentDonations: [
-     
-    ]
+    monthlyDonations: Array(12).fill(0),
+    recentDonations: []
   });
+
+  const hotelName = JSON.parse(localStorage.getItem('userInfo'))?.hotelName || "UnknownHotel";
+
   useEffect(() => {
-    setSidebarOpen(false); 
-  }, []);
+    setSidebarOpen(false);
+
+    const fetchDashboardData = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/hotel/${hotelName}/dashboard`);
+        setDashboardData(res.data);
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+      }
+    };
+
+    fetchDashboardData();
+  }, [hotelName]);
 
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -62,7 +74,6 @@ const HotelDashboard = () => {
           <div className="stat-content">
             <h3>{dashboardData.totalDonations}</h3>
             <p>Total Donations</p>
-            <span className="stat-trend"></span>
           </div>
         </div>
         
@@ -73,7 +84,6 @@ const HotelDashboard = () => {
           <div className="stat-content">
             <h3>{dashboardData.totalServings.toLocaleString()}</h3>
             <p>Total Servings</p>
-            <span className="stat-trend"></span>
           </div>
         </div>
         
@@ -84,7 +94,6 @@ const HotelDashboard = () => {
           <div className="stat-content">
             <h3>{dashboardData.ngosServed}</h3>
             <p>NGOs Served</p>
-            <span className="stat-trend"></span>
           </div>
         </div>
         
@@ -95,7 +104,6 @@ const HotelDashboard = () => {
           <div className="stat-content">
             <h3>{dashboardData.peopleFed.toLocaleString()}</h3>
             <p>People Fed</p>
-            <span className="stat-trend"></span>
           </div>
         </div>
       </div>
@@ -118,6 +126,7 @@ const HotelDashboard = () => {
                 </div>
               </div>
             ))}
+            {dashboardData.recentDonations.length === 0 && <p>No recent donations</p>}
           </div>
         </div>
 
@@ -153,21 +162,13 @@ const HotelDashboard = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return renderDashboardOverview();
-      case 'donate':
-        return <AddDonation  />; 
-      case 'history':
-        return <MyDonations />;
-      case 'analytics':
-        return <Reports />; // 
-    
-      default:
-        return renderDashboardOverview();
+      case 'dashboard': return renderDashboardOverview();
+      case 'donate': return <AddDonation />;
+      case 'history': return <MyDonations />;
+      case 'analytics': return <Reports />;
+      default: return renderDashboardOverview();
     }
   };
-  
-  
 
   return (
     <div className="hotel-dashboard">
