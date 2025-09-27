@@ -4,6 +4,9 @@ import Home from './pages/Home';
 import AuthSystem from './components/Auth/AuthSystem';
 import HotelDashboard from './pages/Hotel/Dashboard';
 import NgoDashboard from './pages/ngos/NgoDashboard';
+import Header from './Header';
+import About from './pages/About.jsx';
+
 
 function App() {
   return (
@@ -19,7 +22,7 @@ function App() {
           <Route path="/auth/hotel" element={<AuthSystem initialUserType="hotel" />} />
 
           <Route path="/donate" element={<Home section="Donate" />} />
-          <Route path="/about" element={<Home section="About" />} />
+          <Route path="/about" element={<About />} />
           <Route path="/hotel" element={<HotelDashboard />} />
           <Route path="/ngo" element={<NgoDashboard />} />
         </Routes>

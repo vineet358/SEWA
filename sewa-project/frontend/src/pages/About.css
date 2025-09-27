@@ -1,0 +1,271 @@
+/* AboutSewa.css - FIXED VERSION */
+
+.about-sewa {
+    background-color: #f8fafc;
+    padding: 80px 20px;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  
+  .header {
+    text-align: center;
+    margin-bottom: 100px;
+    position: relative;
+    z-index: 10;
+    background-color: #f8fafc;
+    padding: 0 20px;
+  }
+  
+  .main-heading {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #1f2937;
+    margin-bottom: 24px;
+    position: relative;
+    letter-spacing: -0.025em;
+  }
+  
+  .main-heading::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #dc2626, #ef4444);
+    margin: 24px auto;
+    border-radius: 2px;
+  }
+  
+  .intro-text {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: #374151;
+    max-width: 900px;
+    margin: 0 auto;
+    font-weight: 400;
+    background-color: #f8fafc;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .impact-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    margin: 100px auto 80px auto;
+    max-width: 1000px;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .card {
+    background: #ffffff;
+    padding: 50px 30px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    min-height: 300px;
+  }
+  
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #dc2626, #ef4444, #f87171);
+  }
+  
+  .card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(220, 38, 38, 0.2);
+  }
+  
+  .card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(135deg, #1f2937, #374151);
+    border-radius: 50%;
+    margin: 0 auto 30px auto;
+    box-shadow: 0 8px 25px rgba(31, 41, 55, 0.3);
+  }
+  
+  .icon {
+    width: 45px;
+    height: 45px;
+    color: white;
+    stroke-width: 2;
+  }
+  
+  .card-number {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #dc2626;
+    margin-bottom: 12px;
+    line-height: 1;
+    letter-spacing: -0.025em;
+  }
+  
+  .card-label {
+    font-size: 1rem;
+    color: #6b7280;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0;
+  }
+  
+  .cta-section {
+    text-align: center;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 60px;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .cta-button {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    border: none;
+    padding: 18px 40px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    min-width: 200px;
+  }
+  
+  .cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(220, 38, 38, 0.5);
+    background: linear-gradient(135deg, #b91c1c, #991b1b);
+  }
+  
+  .cta-button.secondary {
+    background: transparent;
+    color: #1f2937;
+    border: 3px solid #1f2937;
+    box-shadow: 0 8px 25px rgba(31, 41, 55, 0.2);
+  }
+  
+  .cta-button.secondary:hover {
+    background: #1f2937;
+    color: white;
+    box-shadow: 0 12px 35px rgba(31, 41, 55, 0.4);
+    transform: translateY(-3px);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .impact-cards {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin: 80px auto 60px auto;
+    }
+    
+    .card {
+      padding: 40px 25px;
+      min-height: 250px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .about-sewa {
+      padding: 60px 20px;
+    }
+    
+    .header {
+      margin-bottom: 80px;
+    }
+    
+    .main-heading {
+      font-size: 2.5rem;
+    }
+    
+    .intro-text {
+      font-size: 1.1rem;
+      padding: 15px;
+    }
+    
+    .impact-cards {
+      grid-template-columns: 1fr;
+      gap: 30px;
+      margin: 60px auto 50px auto;
+    }
+    
+    .card {
+      padding: 40px 30px;
+      max-width: 400px;
+      margin: 0 auto;
+      min-height: auto;
+    }
+    
+    .card-number {
+      font-size: 2.5rem;
+    }
+    
+    .cta-section {
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .cta-button {
+      width: 100%;
+      max-width: 320px;
+      padding: 20px 40px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .main-heading {
+      font-size: 2rem;
+    }
+    
+    .intro-text {
+      font-size: 1rem;
+      padding: 15px 10px;
+    }
+    
+    .card {
+      padding: 35px 25px;
+    }
+    
+    .card-icon {
+      width: 75px;
+      height: 75px;
+    }
+    
+    .icon {
+      width: 35px;
+      height: 35px;
+    }
+    
+    .card-number {
+      font-size: 2rem;
+    }
+    
+    .card-label {
+      font-size: 0.9rem;
+    }
+  }

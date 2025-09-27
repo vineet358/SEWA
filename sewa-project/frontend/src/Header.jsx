@@ -19,14 +19,14 @@ const Header = ({ section }) => {
     setDropdownOpen(prev => !prev);
   };
 
-  // --- Slideshow logic ---
+
   const images = [background1, background2, background3];
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 4000); // Change image every 4 seconds
+    }, 4000); 
     return () => clearInterval(interval);
   }, []);
 
