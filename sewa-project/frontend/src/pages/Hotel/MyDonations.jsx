@@ -26,14 +26,16 @@ const MyDonations = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
   const fetchDonations = async () => {
     try {
       const hotelData = JSON.parse(localStorage.getItem('userInfo'));
       const hotelId = hotelData?.hotelId;
       if (!hotelId) return;
-      
+
       const res = await axios.get(`http://localhost:5000/api/food/history/${hotelId}`);
-      const donationsData = res.data.donations;
+      const donationsData = res.data.donations || [];
+
       const mappedDonations = donationsData.map(d => ({
         id: d._id,
         foodType: d.foodType,
@@ -49,8 +51,8 @@ const MyDonations = () => {
 
       setDonations(mappedDonations);
       setFilteredDonations(mappedDonations);
-    } catch (error) { 
-      console.error("Error fetching donations:", error);
+    } catch (error) {
+      console.error('Error fetching donations:', error);
     }
   };
 
@@ -59,34 +61,34 @@ const MyDonations = () => {
   }, []);
 
   const handleDonationAdded = () => {
-    console.log("New donation added, refreshing list...");
+    // Refresh list when a new donation is added
     fetchDonations();
   };
 
+  // Apply filters
   useEffect(() => {
     let filtered = donations;
 
-   
+    // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(donation =>
-        donation.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        donation.ngo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        donation.foodType.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(d =>
+        d.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.ngo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.foodType.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(donation => donation.status === statusFilter);
+      filtered = filtered.filter(d => d.status === statusFilter);
     }
 
     // Date filter
     if (dateFilter !== 'all') {
       const now = new Date();
-      filtered = filtered.filter(donation => {
-        const donationDate = new Date(donation.date);
+      filtered = filtered.filter(d => {
+        const donationDate = new Date(d.date);
         const daysDiff = Math.floor((now - donationDate) / (1000 * 60 * 60 * 24));
-        
         switch (dateFilter) {
           case 'today':
             return daysDiff === 0;
@@ -103,49 +105,39 @@ const MyDonations = () => {
     setFilteredDonations(filtered);
   }, [donations, searchTerm, statusFilter, dateFilter]);
 
+  // Status icons and text
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'delivered':
-        return <CheckCircle size={16} className="status-icon delivered" />;
-      case 'picked-up':
-        return <Truck size={16} className="status-icon picked-up" />;
-      case 'pending':
-        return <Package size={16} className="status-icon pending" />;
-      case 'expired':
-        return <AlertTriangle size={16} className="status-icon expired" />;
-      default:
-        return <Package size={16} className="status-icon" />;
+      case 'delivered': return <CheckCircle size={16} className="status-icon delivered" />;
+      case 'picked-up': return <Truck size={16} className="status-icon picked-up" />;
+      case 'pending': return <Package size={16} className="status-icon pending" />;
+      case 'expired': return <AlertTriangle size={16} className="status-icon expired" />;
+      default: return <Package size={16} className="status-icon" />;
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'delivered':
-        return 'Delivered to NGO';
-      case 'picked-up':
-        return 'Picked Up';
-      case 'pending':
-        return 'Pending Pickup';
-      case 'expired':
-        return 'Expired';
-      default:
-        return status;
+      case 'delivered': return 'Delivered to NGO';
+      case 'picked-up': return 'Picked Up';
+      case 'pending': return 'Pending Pickup';
+      case 'expired': return 'Expired';
+      default: return status;
     }
   };
 
+  // Modal handlers
   const handleViewDetails = (donation) => {
     setSelectedDonation(donation);
     setShowModal(true);
   };
-
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedDonation(null);
   };
 
   const handleExport = () => {
-    // In a real app, this would generate and download a CSV/Excel file
-    console.log('Exporting donations data...');
+    console.log('Exporting donations...');
   };
 
   return (

@@ -178,32 +178,32 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+  
     if (!validateForm()) return;
-
+  
     setIsLoading(true);
-    setErrors({}); // Clear previous errors
-    
+    setErrors({});
+  
     try {
       let url = '';
       let payload = {};
-      
+  
       if (authMode === 'login') {
         url = `http://localhost:5000/api/auth/${userType}/login`;
         payload = {
           email: formData.email,
-          password: formData.password
+          password: formData.password,
         };
       } else if (authMode === 'register') {
         url = `http://localhost:5000/api/auth/${userType}/signup`;
-        
-        // Create payload based on user type
+  
+        // Payload based on user type
         if (userType === 'individual') {
           payload = {
             name: formData.name,
             email: formData.email,
             password: formData.password,
-            phone: formData.phone
+            phone: formData.phone,
           };
         } else if (userType === 'ngo') {
           payload = {
@@ -213,96 +213,121 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
             password: formData.password,
             phone: formData.phone,
             address: formData.address,
-            licenseNumber: formData.licenseNumber
+            licenseNumber: formData.licenseNumber,
           };
         } else if (userType === 'hotel') {
           payload = {
             hotelName: formData.hotelName,
-            managerName: formData.managerName, // Make sure this matches your backend
+            managerName: formData.managerName,
             email: formData.email,
             password: formData.password,
             phone: formData.phone,
             address: formData.address,
-            licenseNumber: formData.licenseNumber
+            licenseNumber: formData.licenseNumber,
           };
         }
       }
-
-      console.log('Sending request to:', url);
-      console.log('Payload:', payload);
-      
+  
       const response = await axios.post(url, payload);
       console.log('Response:', response.data);
-       if (authMode === 'login' && response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-      localStorage.setItem('userType', userType);
-
   
+    // ----------------------------
+// LOGIN SUCCESS HANDLING
+// ----------------------------
+if (authMode === 'login' && response.data.token) {
+  // Store token and user type
+  localStorage.setItem('authToken', response.data.token);
+  localStorage.setItem('userType', userType);
+
   if (userType === 'hotel') {
-    localStorage.setItem('userInfo', JSON.stringify(response.data.hotel));
-  } else if (userType === 'ngo') {
-    localStorage.setItem('userInfo', JSON.stringify(response.data.ngo));
-  } else {
-    localStorage.setItem('userInfo', JSON.stringify(response.data.user));
-  }
-  if(userType === 'hotel') {
+    const hotel = response.data.hotel;
+
+    // Store minimal info for general auth
+    localStorage.setItem('userId', hotel.hotelId);
+
+    // Store full hotel info for donation or other components
+    localStorage.setItem(
+      'userInfo',
+      JSON.stringify({
+        hotelId: hotel.hotelId,
+        hotelName: hotel.hotelName,
+        licenseNumber: hotel.licenseNumber
+      })
+    );
+
+    // Redirect to hotel dashboard
     Navigate('/hotel');
-}
-  else if(userType === 'ngo') {
+
+  } else if (userType === 'ngo') {
+    const ngo = response.data.ngo;
+
+    localStorage.setItem('userId', ngo.id);
+
+    localStorage.setItem(
+      'userInfo',
+      JSON.stringify({
+        ngoId: ngo.id,
+        ngoName: ngo.name,
+        email: ngo.email
+      })
+    );
+
     Navigate('/ngo');
+
+  } else {
+    // Regular user
+    const user = response.data.user;
+
+    localStorage.setItem('userId', user.id);
+
+    localStorage.setItem(
+      'userInfo',
+      JSON.stringify({
+        userId: user.id,
+        name: user.name,
+        email: user.email
+      })
+    );
+
+    Navigate('/user-dashboard'); // change as needed
   }
 }
 
-      setSuccess(true);
-      
-      setTimeout(() => {
-        setSuccess(false);
-        if (authMode === 'register') {
-          setAuthMode('login');
-        }
-        // Reset form
-        setFormData({
-          email: '',
-          password: '',
-          confirmPassword: '',
-          phone: '',
-          name: '',
-          organizationName: '',
-          contactPerson: '',
-          managerName: '',
-          address: '',
-          licenseNumber: '',
-          hotelName: '',
-          profilePicture: null,
-          documents: null
-        });
-      }, 3000);
-      
-    } catch (error) {
-      console.error('Backend error:', error);
-      
-      let errorMessage = 'Something went wrong';
-      
-      if (error.response) {
-        // Server responded with error status
-        console.error('Error response:', error.response.data);
-        errorMessage = error.response.data?.message || error.response.data?.error || 'Server error';
-      } else if (error.request) {
-        // Request was made but no response received
-        console.error('No response received:', error.request);
-        errorMessage = 'Unable to connect to server. Please check if the server is running.';
+// Show success message and reset form
+setSuccess(true);
+setTimeout(() => {
+  setSuccess(false);
+  if (authMode === 'register') setAuthMode('login');
+
+  setFormData({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phone: '',
+    name: '',
+    organizationName: '',
+    contactPerson: '',
+    managerName: '',
+    address: '',
+    licenseNumber: '',
+    hotelName: '',
+    profilePicture: null,
+    documents: null,
+  });
+}, 3000);
+    } catch (err) {
+      console.error('Error during auth:', err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setErrors({ form: err.response.data.message });
       } else {
-        // Something else happened
-        console.error('Request error:', error.message);
-        errorMessage = error.message;
+        setErrors({ form: 'An error occurred. Please try again.' });
       }
-      
-      setErrors({ form: errorMessage });
     } finally {
       setIsLoading(false);
     }
   };
 
+  
   const renderUserTypeSelector = () => (
     <div className="user-type-selector">
       <h3>Select User Type</h3>

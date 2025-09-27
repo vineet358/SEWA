@@ -28,23 +28,20 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
   const [hotelData, setHotelData] = useState({
+    hotelId: null,
     hotelName: hotelName || null,
     licenseNo: licenseNo || null
   });
 
-  // Get hotel data from props or localStorage
+  // Initialize hotel data from props or localStorage
   useEffect(() => {
-    const storedHotelName = localStorage.getItem('hotelName');
-    const storedLicenseNo = localStorage.getItem('licenseNo');
-    
-    console.log('Hotel data check:');
-    console.log('Props - hotelName:', hotelName, 'licenseNo:', licenseNo);
-    console.log('localStorage - hotelName:', storedHotelName, 'licenseNo:', storedLicenseNo);
-    
+    const storedHotel = JSON.parse(localStorage.getItem('userInfo'));
     setHotelData({
-      hotelName: hotelName || storedHotelName,
-      licenseNo: licenseNo || storedLicenseNo
+      hotelId: storedHotel?.hotelId || null,
+      hotelName: hotelName || storedHotel?.hotelName || null,
+      licenseNo: licenseNo || storedHotel?.licenseNumber || null
     });
   }, [hotelName, licenseNo]);
 
@@ -86,29 +83,19 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
     if (!expiryTime) newErrors.expiryTime = 'Expiry time is required';
     if (!pickupLocation) newErrors.pickupLocation = 'Pickup location is required';
 
-    // More robust date validation
     if (prepDate && prepTime) {
       const prepDateTime = new Date(`${prepDate}T${prepTime}`);
       const now = new Date();
 
-      if (prepDateTime > now) {
-        newErrors.prepDate = 'Preparation time cannot be in the future';
-      }
+      if (prepDateTime > now) newErrors.prepDate = 'Preparation time cannot be in the future';
 
       if (expiryDate && expiryTime) {
         const expiryDateTime = new Date(`${expiryDate}T${expiryTime}`);
-        
-        if (expiryDateTime <= prepDateTime) {
-          newErrors.expiryDate = 'Expiry time must be after preparation time';
-        }
-        
-        if (expiryDateTime <= now) {
-          newErrors.expiryDate = 'Food has already expired';
-        }
+        if (expiryDateTime <= prepDateTime) newErrors.expiryDate = 'Expiry time must be after preparation time';
+        if (expiryDateTime <= now) newErrors.expiryDate = 'Food has already expired';
       }
     }
 
-    // Validate quantity is a positive number
     if (quantity && (isNaN(quantity) || Number(quantity) <= 0)) {
       newErrors.quantity = 'Quantity must be a positive number';
     }
@@ -119,33 +106,30 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!validateForm()) {
       console.log('Form validation failed:', errors);
       return;
     }
-  
-    // Fetch hotel info from localStorage
-    const hotelData = JSON.parse(localStorage.getItem('userInfo'));
-    const hotelId = hotelData?.hotelId;
-    const hotelName = hotelData?.hotelName;
-  
-    if (!hotelId || !hotelName) {
+
+    const hotelId = hotelData.hotelId;
+    const hotelNameFinal = hotelData.hotelName;
+
+    if (!hotelId || !hotelNameFinal) {
       alert('Hotel credentials are missing. Please log in again.');
       console.error('Missing hotel credentials:', hotelData);
       return;
     }
-  
+
     setIsSubmitting(true);
-  
+
     try {
-      // Convert prep and expiry dates to ISO format
       const preparedAt = new Date(`${formData.prepDate}T${formData.prepTime}`).toISOString();
       const expiryAt = new Date(`${formData.expiryDate}T${formData.expiryTime}`).toISOString();
-  
+
       const payload = {
         hotelId,
-        hotelName,
+        hotelName: hotelNameFinal,
         foodType: formData.foodType,
         quantity: Number(formData.quantity),
         servesPeople: Number(formData.quantity),
@@ -155,24 +139,20 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
         pickupAddress: formData.pickupLocation,
         images: formData.images.map(img => img.split("/").pop())
       };
-  
+
       console.log('Sending payload:', payload);
-  
+
       const res = await axios.post("http://localhost:5000/api/food/add", payload, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
-  
+
       console.log('Success response:', res.data);
       setSubmitSuccess(true);
 
-      // 🚀 THIS IS THE KEY ADDITION: Call the callback to refresh donations list
       if (onDonationAdded && typeof onDonationAdded === 'function') {
-        console.log('Calling onDonationAdded callback to refresh donations list...');
         onDonationAdded();
       }
-  
+
       // Reset form after success
       setTimeout(() => {
         setFormData({
@@ -188,10 +168,9 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
         });
         setSubmitSuccess(false);
       }, 3000);
-  
+
     } catch (error) {
       console.error('Error submitting donation:', error);
-  
       if (error.response?.data) {
         const errorMessage = error.response.data.message || 'Unknown server error';
         const errorDetails = error.response.data.errors?.join(', ') || '';
