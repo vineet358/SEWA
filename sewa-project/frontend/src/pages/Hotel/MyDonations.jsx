@@ -26,8 +26,6 @@ const MyDonations = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [showModal, setShowModal] = useState(false);
-
-  // Extract fetchDonations into a separate function so it can be reused
   const fetchDonations = async () => {
     try {
       const hotelData = JSON.parse(localStorage.getItem('userInfo'));

@@ -17,6 +17,7 @@ import {
 import './AuthSystem.css';
 import bgImage from '../../assets/food4.jpeg'; 
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
   console.log('AuthSystem rendered with initialUserType:', initialUserType);
@@ -27,9 +28,9 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
+  const Navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    // Common fields
     email: '',
     password: '',
     confirmPassword: '',
@@ -46,7 +47,7 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
     
     // Hotel fields
     hotelName: '',
-    managerName: '', // This should match your backend
+    managerName: '', 
     address: '',
     licenseNumber: '',
     
@@ -93,7 +94,7 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
       }));
     }
     
-    // Clear form error when user starts typing
+  
     if (errors.form) {
       setErrors(prev => ({
         ...prev,
@@ -232,18 +233,23 @@ const AuthSystem = ({ initialUserType = 'individual', onBack }) => {
       
       const response = await axios.post(url, payload);
       console.log('Response:', response.data);
-      // Store token if login is successful
-if (authMode === 'login' && response.data.token) {
-  localStorage.setItem('authToken', response.data.token);
-  localStorage.setItem('userType', userType);
+       if (authMode === 'login' && response.data.token) {
+      localStorage.setItem('authToken', response.data.token);
+      localStorage.setItem('userType', userType);
 
-  // Store user/ngo/hotel info based on userType
+  
   if (userType === 'hotel') {
     localStorage.setItem('userInfo', JSON.stringify(response.data.hotel));
   } else if (userType === 'ngo') {
     localStorage.setItem('userInfo', JSON.stringify(response.data.ngo));
   } else {
     localStorage.setItem('userInfo', JSON.stringify(response.data.user));
+  }
+  if(userType === 'hotel') {
+    Navigate('/hotel');
+}
+  else if(userType === 'ngo') {
+    Navigate('/ngo');
   }
 }
 
