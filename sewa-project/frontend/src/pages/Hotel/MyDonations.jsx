@@ -83,7 +83,6 @@ const MyDonations = () => {
       filtered = filtered.filter(d => d.status === statusFilter);
     }
 
-    // Date filter
     if (dateFilter !== 'all') {
       const now = new Date();
       filtered = filtered.filter(d => {
@@ -365,7 +364,7 @@ const MyDonations = () => {
           </div>
         </div>
       )}
-      <AddDonation onDonationAdded={handleDonationAdded} />
+
     </div>
   );
 };

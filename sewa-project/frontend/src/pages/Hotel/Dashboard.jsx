@@ -51,8 +51,7 @@ const HotelDashboard = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'donate', label: 'Donate Food', icon: Plus },
     { id: 'history', label: 'Donation History', icon: History },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'reports', label: 'Reports', icon: BarChart3 },
   ];
 
   const handleSidebarToggle = () => {
@@ -165,7 +164,7 @@ const HotelDashboard = () => {
       case 'dashboard': return renderDashboardOverview();
       case 'donate': return <AddDonation />;
       case 'history': return <MyDonations />;
-      case 'analytics': return <Reports />;
+      case 'reports': return <Reports />;
       default: return renderDashboardOverview();
     }
   };

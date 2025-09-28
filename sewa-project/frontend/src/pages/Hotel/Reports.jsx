@@ -10,7 +10,11 @@ import {
   Filter,
   ChevronDown
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, BarChart, Bar } from 'recharts';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar 
+} from 'recharts';
+
 import '../../components/CSS/Hotel/Reports.css';
 
 const Reports = () => {

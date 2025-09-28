@@ -1,4 +1,4 @@
-/* Hotel Dashboard Styles */
+
 .hotel-dashboard {
     display: flex;
     min-height: 100vh;
@@ -105,6 +105,8 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    height:100vh;
+    overflow:hidden;
   }
   
   .topbar {
@@ -177,6 +179,7 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    height: 100%;
   }
   
   .dashboard-content {
