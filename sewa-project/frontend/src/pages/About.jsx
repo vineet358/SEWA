@@ -6,7 +6,7 @@ const About = () => {
   return (
     <section className="about-sewa">
       <div className="container">
-        <div className="header">
+        <div className="header-about">
           <h2 className="main-heading">About SEWA</h2>
           <p className="intro-text">
             SEWA bridges the gap between abundance and need by connecting hotels and restaurants 
