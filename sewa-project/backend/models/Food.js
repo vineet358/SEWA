@@ -48,12 +48,9 @@ const foodSchema = new mongoose.Schema({
   },
   acceptedAt: { type: Date, default: null },
 
-  acceptedByNgo: {
-    type: String,
-    default: null,
-  },
+  acceptedByNgo: { type: String, default: null },     
+  acceptedByNgoId: { type: mongoose.Schema.Types.ObjectId, ref: "Ngo", default: null }, // NEW
 }, { timestamps: true });
-
 
 
 function arrayLimit(val) {
