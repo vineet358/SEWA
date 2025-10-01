@@ -9,5 +9,5 @@ router.get("/history/:hotelId", getDonationHistory);
 router.get("/available",getAvailableDonations);
 router.put("/:id/accept",acceptDonation);
 router.put("/:id/reject",rejectDonation);
-router.get("/ngo/history/:ngoName",getNgoHistory);
+router.get("/ngo/history/:ngoId",getNgoHistory);
 export default router;
