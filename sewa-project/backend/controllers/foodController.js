@@ -123,20 +123,30 @@ export const getAvailableDonations=async(req,res)=>{
   }
 };
 
-export const acceptDonation=async(req,res)=>{
-  try{
-    const {id}=req.params;
-    const {ngoName}=req.body;
+export const acceptDonation = async (req, res) => {
+  try {
+    const { id } = req.params;               // Food ID
+    const { ngoId, ngoName } = req.body;     // Send both from frontend
+
+    if (!ngoId || !ngoName) {
+      return res.status(400).json({ message: "NGO ID and name are required" });
+    }
+
     const food = await Food.findOneAndUpdate(
-      {_id:id,status:"available"},
+      { _id: id, status: "available" },      // Only available donations
       {
-        status:"taken",
-        acceptedByNgo:ngoName,
-        acceptedAt:new Date(),
+        status: "taken",
+        acceptedByNgo: ngoName,              // Optional display field
+        acceptedByNgoId: ngoId,              // NEW: unique ID
+        acceptedAt: new Date(),
       },
-      {new:true}
+      { new: true }
     );
-    if(!food) return res.status(404).json({message:"Donation not found or already taken"});
+
+    if (!food) {
+      return res.status(404).json({ message: "Donation not found or already taken" });
+    }
+
     res.json({
       message: "Donation accepted successfully",
       food
@@ -148,7 +158,7 @@ export const acceptDonation=async(req,res)=>{
       error: error.message
     });
   }
-}
+};
 
 
 export const rejectDonation = async (req, res) => {
@@ -176,15 +186,20 @@ export const rejectDonation = async (req, res) => {
 
 export const getNgoHistory = async (req, res) => {
   try {
-    const { ngoName } = req.params;
+    const { ngoId } = req.params;  // Now we expect ID, not name
+
+    if (!ngoId) {
+      return res.status(400).json({ message: "NGO ID is required" });
+    }
 
     const history = await Food.find({
-      acceptedByNgo: ngoName,
+      acceptedByNgoId: ngoId,       // Use unique ObjectId
       status: "taken",
     }).sort({ acceptedAt: -1 });
 
-    res.json(history);
+    res.json(history);  // returns all donations accepted by this NGO
   } catch (err) {
+    console.error("Error fetching NGO history:", err);
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
