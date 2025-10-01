@@ -19,12 +19,18 @@ const AcceptedDonations = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [donations, setDonations] = useState([]);
 
-  const ngoName = JSON.parse(localStorage.getItem('userInfo'))?.organizationName || 'Unknown NGO';
+  const ngoInfo = JSON.parse(localStorage.getItem('userInfo'));
+  const ngoId = ngoInfo?.ngoId;
+  const ngoName = ngoInfo?.ngoName || 'Unknown NGO';
 
-  // Fetch donations assigned or available for this NGO
+  // Fetch donations accepted by this NGO
   const fetchDonations = async () => {
+    if (!ngoId) {
+      console.error("NGO ID not found in localStorage");
+      return;
+    }
     try {
-      const res = await axios.get(`http://localhost:5000/api/food/ngo/history/${ngoName}`);
+      const res = await axios.get(`http://localhost:5000/api/food/ngo/history/${ngoId}`);
       const mappedDonations = res.data.map(donation => ({
         ...donation,
         id: donation._id
@@ -37,12 +43,14 @@ const AcceptedDonations = () => {
 
   useEffect(() => {
     fetchDonations();
-  }, [ngoName]);
+  }, [ngoId]);
 
   // Accept donation
   const handleAccept = async (id) => {
+    if (!ngoId) return;
+
     try {
-      const res = await axios.put(`http://localhost:5000/api/food/${id}/accept`, { ngoName });
+      const res = await axios.put(`http://localhost:5000/api/food/${id}/accept`, { ngoId, ngoName });
       const updatedDonations = donations.map(d => d.id === id ? res.data.food : d);
       setDonations(updatedDonations);
     } catch (error) {
@@ -87,8 +95,7 @@ const AcceptedDonations = () => {
       default: return '#64748b';
     }
   };
-
-  const totalAccepted = donations.filter(d => d.status === 'taken' && d.acceptedByNgo === ngoName).length;
+  const totalAccepted = donations.filter(d => d.status === 'taken' && d.acceptedByNgoId === ngoId).length;
   const totalServings = donations.reduce((sum, d) => sum + d.servesPeople, 0);
 
   return (
