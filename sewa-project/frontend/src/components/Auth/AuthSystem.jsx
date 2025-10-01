@@ -242,10 +242,8 @@ if (authMode === 'login' && response.data.token) {
   if (userType === 'hotel') {
     const hotel = response.data.hotel;
 
-    // Store minimal info for general auth
     localStorage.setItem('userId', hotel.hotelId);
 
-    // Store full hotel info for donation or other components
     localStorage.setItem(
       'userInfo',
       JSON.stringify({
@@ -255,7 +253,6 @@ if (authMode === 'login' && response.data.token) {
       })
     );
 
-    // Redirect to hotel dashboard
     Navigate('/hotel');
 
   } else if (userType === 'ngo') {
@@ -263,11 +260,12 @@ if (authMode === 'login' && response.data.token) {
 
     localStorage.setItem('userId', ngo.id);
 
+
     localStorage.setItem(
       'userInfo',
       JSON.stringify({
-        ngoId: ngo.id,
-        ngoName: ngo.name,
+        ngoId: ngo.id,            
+        organizationName: ngo.name,
         email: ngo.email
       })
     );
@@ -275,7 +273,6 @@ if (authMode === 'login' && response.data.token) {
     Navigate('/ngo');
 
   } else {
-    // Regular user
     const user = response.data.user;
 
     localStorage.setItem('userId', user.id);
@@ -289,7 +286,7 @@ if (authMode === 'login' && response.data.token) {
       })
     );
 
-    Navigate('/user-dashboard'); // change as needed
+    Navigate('/user-dashboard');
   }
 }
 
