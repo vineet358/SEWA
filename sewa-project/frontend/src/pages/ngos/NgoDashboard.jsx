@@ -27,26 +27,28 @@ const NgoDashboard = () => {
     peopleServed: 0,
   });
 
-  const ngoName = JSON.parse(localStorage.getItem('userInfo'))?.organizationName || 'Unknown NGO';
+  // Fetch from localStorage
+  const ngoInfo = JSON.parse(localStorage.getItem('userInfo'));
+  const ngoId = JSON.parse(localStorage.getItem('userInfo'))?.ngoId;
+  const ngoName = ngoInfo?.organizationName || 'Unknown NGO';
 
   useEffect(() => {
     setSidebarOpen(false); 
-    fetchDashboardData();
-  }, [ngoName]);
+    if (ngoId) fetchDashboardData();
+  }, [ngoId]);
 
-  // Fetch NGO-specific dashboard data
   const fetchDashboardData = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/food/ngo/history/${ngoName}`);
+      const res = await axios.get(`http://localhost:5000/api/food/ngo/history/${ngoId}`);
       const donations = res.data;
 
       const totalDonations = donations.length;
       const totalDistributions = donations.filter(d => d.status === 'taken' || d.status === 'distributed').length;
-      const peopleServed = donations.reduce((sum, d) => sum + d.servesPeople, 0);
+      const peopleServed = donations.reduce((sum, d) => sum + (d.servesPeople || 0), 0);
 
       setDashboardData({
         totalDonations,
-        totalRequests: 0, // You can fetch requests from API if you have that endpoint
+        totalRequests: 0, 
         totalDistributions,
         peopleServed,
       });
@@ -64,6 +66,7 @@ const NgoDashboard = () => {
   ];
 
   const handleSidebarToggle = () => setSidebarOpen(!sidebarOpen);
+
 
   const renderDashboardOverview = () => (
     <div className="ngo-dashboard-content">
