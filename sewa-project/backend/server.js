@@ -10,6 +10,7 @@ import ngoAuth from "./routes/authNgo.js";
 import hotelAuth from "./routes/authHotel.js";
 import foodRoutes from "./routes/foodRoutes.js";
 import hotelDashboardRoutes from "./routes/hotelDashboard.js";
+import reportRoutes from "./routes/reportRoutes.js";
 
 
 
@@ -22,10 +23,7 @@ app.use("/api/auth/ngo", ngoAuth);
 app.use("/api/auth/hotel", hotelAuth);
 app.use("/api/food",foodRoutes);
 app.use("/api/hotel", hotelDashboardRoutes);
-
-
-
-
+app.use("/api/reports", reportRoutes);
 
 const PORT = process.env.PORT || 5000;
 
