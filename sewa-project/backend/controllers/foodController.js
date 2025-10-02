@@ -125,19 +125,19 @@ export const getAvailableDonations=async(req,res)=>{
 
 export const acceptDonation = async (req, res) => {
   try {
-    const { id } = req.params;               // Food ID
-    const { ngoId, ngoName } = req.body;     // Send both from frontend
+    const { id } = req.params;              
+    const { ngoId, ngoName } = req.body;   
 
     if (!ngoId || !ngoName) {
       return res.status(400).json({ message: "NGO ID and name are required" });
     }
 
     const food = await Food.findOneAndUpdate(
-      { _id: id, status: "available" },      // Only available donations
+      { _id: id, status: "available" },     
       {
         status: "taken",
-        acceptedByNgo: ngoName,              // Optional display field
-        acceptedByNgoId: ngoId,              // NEW: unique ID
+        acceptedByNgo: ngoName,             
+        acceptedByNgoId: ngoId,             
         acceptedAt: new Date(),
       },
       { new: true }
@@ -186,7 +186,7 @@ export const rejectDonation = async (req, res) => {
 
 export const getNgoHistory = async (req, res) => {
   try {
-    const { ngoId } = req.params;  // Now we expect ID, not name
+    const { ngoId } = req.params; 
 
     if (!ngoId) {
       return res.status(400).json({ message: "NGO ID is required" });
@@ -197,7 +197,7 @@ export const getNgoHistory = async (req, res) => {
       status: "taken",
     }).sort({ acceptedAt: -1 });
 
-    res.json(history);  // returns all donations accepted by this NGO
+    res.json(history); 
   } catch (err) {
     console.error("Error fetching NGO history:", err);
     res.status(500).json({ msg: "Server error", error: err.message });
