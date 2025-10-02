@@ -265,7 +265,7 @@ if (authMode === 'login' && response.data.token) {
       'userInfo',
       JSON.stringify({
         ngoId: ngo.id,            
-        organizationName: ngo.name,
+       ngoName: ngo.organizationName,
         email: ngo.email
       })
     );
