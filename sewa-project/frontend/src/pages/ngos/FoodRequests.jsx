@@ -23,8 +23,7 @@ const FoodRequests = () => {
   const [requests, setRequests] = useState([]);
 
   const ngoName = JSON.parse(localStorage.getItem('userInfo'))?.organizationName || 'Unknown NGO';
-
-  // Fetch all available donations (food requests)
+  const ngoId = JSON.parse(localStorage.getItem('userInfo'))?.ngoId;
   useEffect(() => {
     const fetchRequests = async () => {
       try {
@@ -66,7 +65,7 @@ const FoodRequests = () => {
 
   const handleAcceptDonation = async (requestId) => {
     try {
-      await axios.put(`http://localhost:5000/api/food/${requestId}/accept`, { ngoName });
+      await axios.put(`http://localhost:5000/api/food/${requestId}/accept`, { ngoId,ngoName });
       setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'taken' } : r));
     } catch (error) {
       console.error('Error accepting donation:', error);
