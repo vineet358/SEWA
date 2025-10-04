@@ -35,7 +35,6 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
     licenseNo: licenseNo || null
   });
 
-  // Initialize hotel data from props or localStorage
   useEffect(() => {
     const storedHotel = JSON.parse(localStorage.getItem('userInfo'));
     setHotelData({
