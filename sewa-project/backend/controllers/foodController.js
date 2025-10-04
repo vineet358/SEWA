@@ -125,19 +125,19 @@ export const getAvailableDonations=async(req,res)=>{
 
 export const acceptDonation = async (req, res) => {
   try {
-    const { id } = req.params;              
-    const { ngoId, ngoName } = req.body;   
+    const { id } = req.params;             
+    const { ngoId, ngoName } = req.body;  
 
     if (!ngoId || !ngoName) {
       return res.status(400).json({ message: "NGO ID and name are required" });
     }
 
     const food = await Food.findOneAndUpdate(
-      { _id: id, status: "available" },     
+      { _id: id, status: "available" },    
       {
         status: "taken",
         acceptedByNgo: ngoName,             
-        acceptedByNgoId: ngoId,             
+        acceptedByNgoId: ngoId,            
         acceptedAt: new Date(),
       },
       { new: true }
@@ -193,11 +193,11 @@ export const getNgoHistory = async (req, res) => {
     }
 
     const history = await Food.find({
-      acceptedByNgoId: ngoId,       // Use unique ObjectId
+      acceptedByNgoId: ngoId,      
       status: "taken",
     }).sort({ acceptedAt: -1 });
 
-    res.json(history); 
+    res.json(history);  // returns all donations accepted by this NGO
   } catch (err) {
     console.error("Error fetching NGO history:", err);
     res.status(500).json({ msg: "Server error", error: err.message });
