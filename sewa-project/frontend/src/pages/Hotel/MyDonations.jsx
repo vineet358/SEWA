@@ -61,7 +61,7 @@ const MyDonations = () => {
   }, []);
 
   const handleDonationAdded = () => {
-    // Refresh list when a new donation is added
+  
     fetchDonations();
   };
 
