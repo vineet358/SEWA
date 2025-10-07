@@ -12,6 +12,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart as RechartsPieChart, Pie, Cell
 } from 'recharts';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import '../../components/CSS/Hotel/Reports.css';
 
@@ -22,17 +24,14 @@ const Reports = () => {
   const [foodTypeData, setFoodTypeData] = useState([]);
   const [ngoData, setNgoData] = useState([]);
 
-
-  
-
   const hotelData = JSON.parse(localStorage.getItem('userInfo'));
   const hotelId = hotelData?.hotelId;
   useEffect(() => {
     const fetchReports = async () => {
       try {
         const hotelData = JSON.parse(localStorage.getItem('userInfo'));
-      const hotelId = hotelData?.hotelId;
-      if (!hotelId) return;
+       const hotelId = hotelData?.hotelId;
+       if (!hotelId) return;
       
         const res = await axios.get(`http://localhost:5000/api/hotelReports/${hotelId}?range=${dateRange}`);
 
@@ -64,11 +63,71 @@ const Reports = () => {
   };
 
   const handleExportReport = () => {
-    console.log('Exporting analytics report...');
+    const doc = new jsPDF('p', 'mm', 'a4');
+  
+    // Hotel name on top
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text(hotelData?.hotelName || 'Hotel Name', 105, 15, { align: 'center' });
+  
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Analytics & Reports (${dateRange})`, 105, 25, { align: 'center' });
+  
+    let yOffset = 35;
+  
+    // Metrics
+    const metrics = [
+      { label: 'Total Donations', value: analyticsData.totalDonations },
+      { label: 'Total Servings', value: analyticsData.totalServings },
+      { label: 'NGO Partners', value: analyticsData.ngosServed },
+      { label: 'People Fed', value: analyticsData.peopleFed }
+    ];
+  
+    metrics.forEach((m, i) => {
+      doc.text(`${m.label}: ${m.value}`, 15, yOffset + i * 7);
+    });
+  
+    yOffset += metrics.length * 7 + 5;
+  
+    // Monthly Trends Table
+    if (monthlyData.length) {
+      autoTable(doc, {
+        startY: yOffset,
+        head: [['Month', 'Donations', 'Servings']],
+        body: monthlyData.map(d => [d.month, d.donations, d.servings]),
+        theme: 'grid'
+      });
+      yOffset = doc.lastAutoTable.finalY + 10;
+    }
+  
+    // Food Type Distribution Table
+    if (foodTypeData.length) {
+      autoTable(doc, {
+        startY: yOffset,
+        head: [['Food Type', 'Percentage']],
+        body: foodTypeData.map(d => [d.name, d.value + '%']),
+        theme: 'grid'
+      });
+      yOffset = doc.lastAutoTable.finalY + 10;
+    }
+  
+    // NGO Performance Table
+    if (ngoData.length) {
+      autoTable(doc, {
+        startY: yOffset,
+        head: [['NGO Name', 'Donations Received', 'Total Servings']],
+        body: ngoData.map(d => [d.name, d.donations, d.servings]),
+        theme: 'grid'
+      });
+    }
+  
+    // Save PDF
+    doc.save(`${hotelData?.hotelName || 'Hotel'}_Report.pdf`);
   };
+  
 
   const formatNumber = (num) => num?.toLocaleString() || 0;
-
   return (
     <div className="reports-container">
       {/* Header */}
