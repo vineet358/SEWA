@@ -18,8 +18,6 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
     quantity: '',
     prepDate: '',
     prepTime: '',
-    expiryDate: '',
-    expiryTime: '',
     pickupLocation: '',
     description: '',
     images: []
@@ -28,12 +26,20 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [autoExpiry, setAutoExpiry] = useState({ date: '', time: '' });
 
   const [hotelData, setHotelData] = useState({
     hotelId: null,
     hotelName: hotelName || null,
     licenseNo: licenseNo || null
   });
+
+  // Default shelf-life hours
+  const shelfLife = {
+    vegan: 24,
+    'veg': 12,
+    'non-veg': 6
+  };
 
   useEffect(() => {
     const storedHotel = JSON.parse(localStorage.getItem('userInfo'));
@@ -43,6 +49,19 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
       licenseNo: licenseNo || storedHotel?.licenseNumber || null
     });
   }, [hotelName, licenseNo]);
+
+  // Recalculate expiry automatically
+  useEffect(() => {
+    if (formData.foodType && formData.prepDate && formData.prepTime) {
+      const prepDateTime = new Date(`${formData.prepDate}T${formData.prepTime}`);
+      const hours = shelfLife[formData.foodType] || 8; // fallback 8 hrs
+      const expiryDateTime = new Date(prepDateTime.getTime() + hours * 60 * 60 * 1000);
+
+      const expiryDate = expiryDateTime.toISOString().split('T')[0];
+      const expiryTime = expiryDateTime.toTimeString().slice(0, 5);
+      setAutoExpiry({ date: expiryDate, time: expiryTime });
+    }
+  }, [formData.foodType, formData.prepDate, formData.prepTime]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -72,14 +91,12 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    const { foodType, quantity, prepDate, prepTime, expiryDate, expiryTime, pickupLocation } = formData;
+    const { foodType, quantity, prepDate, prepTime, pickupLocation } = formData;
 
     if (!foodType) newErrors.foodType = 'Food type is required';
     if (!quantity) newErrors.quantity = 'Quantity is required';
     if (!prepDate) newErrors.prepDate = 'Preparation date is required';
     if (!prepTime) newErrors.prepTime = 'Preparation time is required';
-    if (!expiryDate) newErrors.expiryDate = 'Expiry date is required';
-    if (!expiryTime) newErrors.expiryTime = 'Expiry time is required';
     if (!pickupLocation) newErrors.pickupLocation = 'Pickup location is required';
 
     if (prepDate && prepTime) {
@@ -87,12 +104,6 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
       const now = new Date();
 
       if (prepDateTime > now) newErrors.prepDate = 'Preparation time cannot be in the future';
-
-      if (expiryDate && expiryTime) {
-        const expiryDateTime = new Date(`${expiryDate}T${expiryTime}`);
-        if (expiryDateTime <= prepDateTime) newErrors.expiryDate = 'Expiry time must be after preparation time';
-        if (expiryDateTime <= now) newErrors.expiryDate = 'Food has already expired';
-      }
     }
 
     if (quantity && (isNaN(quantity) || Number(quantity) <= 0)) {
@@ -124,7 +135,7 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
 
     try {
       const preparedAt = new Date(`${formData.prepDate}T${formData.prepTime}`).toISOString();
-      const expiryAt = new Date(`${formData.expiryDate}T${formData.expiryTime}`).toISOString();
+      const expiryAt = new Date(`${autoExpiry.date}T${autoExpiry.time}`).toISOString();
 
       const payload = {
         hotelId,
@@ -152,19 +163,17 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
         onDonationAdded();
       }
 
-      // Reset form after success
       setTimeout(() => {
         setFormData({
           foodType: '',
           quantity: '',
           prepDate: '',
           prepTime: '',
-          expiryDate: '',
-          expiryTime: '',
           pickupLocation: '',
           description: '',
           images: []
         });
+        setAutoExpiry({ date: '', time: '' });
         setSubmitSuccess(false);
       }, 3000);
 
@@ -294,32 +303,14 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="expiryDate">Best Before Date *</label>
-              <input 
-                type="date" 
-                id="expiryDate" 
-                name="expiryDate" 
-                value={formData.expiryDate} 
-                onChange={handleInputChange} 
-                className={errors.expiryDate ? 'error' : ''}
-              />
-              {errors.expiryDate && <span className="error-text">{errors.expiryDate}</span>}
+          {/* Auto-calculated expiry */}
+          {autoExpiry.date && autoExpiry.time && (
+            <div className="auto-expiry-box">
+              <p><strong>Estimated Safe Consumption Time:</strong></p>
+              <p>{autoExpiry.date} at {autoExpiry.time}</p>
+              <small>(Calculated automatically based on food type)</small>
             </div>
-            <div className="form-group">
-              <label htmlFor="expiryTime">Best Before Time *</label>
-              <input 
-                type="time" 
-                id="expiryTime" 
-                name="expiryTime" 
-                value={formData.expiryTime} 
-                onChange={handleInputChange} 
-                className={errors.expiryTime ? 'error' : ''}
-              />
-              {errors.expiryTime && <span className="error-text">{errors.expiryTime}</span>}
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Pickup Location Section */}
@@ -389,10 +380,10 @@ const AddDonation = ({ hotelName, licenseNo, onDonationAdded }) => {
           <div>
             <h4>Important Information</h4>
             <ul>
-              <li>NGOs will be automatically notified about your donation</li>
-              <li>Ensure food is properly stored and safe for consumption</li>
-              <li>You'll receive updates on pickup status via email/SMS</li>
-              <li>Pickup should be arranged within 2 hours of expiry time</li>
+              <li>Expiry time is estimated automatically based on food type.</li>
+              <li>NGOs will be notified automatically once donation is added.</li>
+              <li>Ensure food is safe, hygienic, and properly stored.</li>
+              <li>Pickup should be arranged before expiry time.</li>
             </ul>
           </div>
         </div>
