@@ -32,23 +32,42 @@ const MyDonations = () => {
       const hotelData = JSON.parse(localStorage.getItem('userInfo'));
       const hotelId = hotelData?.hotelId;
       if (!hotelId) return;
-
+  
       const res = await axios.get(`http://localhost:5000/api/food/history/${hotelId}`);
       const donationsData = res.data.donations || [];
-
-      const mappedDonations = donationsData.map(d => ({
-        id: d._id,
-        foodType: d.foodType,
-        quantity: d.quantity,
-        servesPeople: d.servesPeople,
-        description: d.description,
-        status: d.status,
-        date: d.createdAt,
-        pickupAddress: d.pickupAddress,
-        images: d.images,
-        ngo: d.acceptedByNgo || 'N/A'
-      }));
-
+  
+      console.log('Raw donations data:', donationsData);
+  
+      const mappedDonations = donationsData.map(d => {
+        const isNgoPopulated = d.acceptedByNgoId && typeof d.acceptedByNgoId === 'object';
+        
+        console.log('Donation:', d._id, 'NGO populated?', isNgoPopulated, 'NGO data:', d.acceptedByNgoId);
+  
+        return {
+          id: d._id,
+          foodType: d.foodType,
+          quantity: d.quantity,
+          servesPeople: d.servesPeople,
+          description: d.description,
+          status: d.status,
+          date: d.createdAt,
+          prepDate: d.preparedAt,
+          expiry: d.expiryAt,
+          pickup: d.pickupAddress,
+          images: d.images || [],
+  
+          ngo: isNgoPopulated 
+            ? d.acceptedByNgoId.organizationName 
+            : (d.acceptedByNgo || 'N/A'),
+          ngoEmail: isNgoPopulated 
+            ? (d.acceptedByNgoId.email || 'N/A') 
+            : 'N/A',
+          ngoPhone: isNgoPopulated 
+            ? (d.acceptedByNgoId.phone || 'N/A') 
+            : 'N/A'
+        };
+      });
+  
       setDonations(mappedDonations);
       setFilteredDonations(mappedDonations);
     } catch (error) {
@@ -139,6 +158,7 @@ const MyDonations = () => {
     console.log('Exporting donations...');
   };
 
+
   return (
     <div className="my-donations-container">
       <div className="donations-header">
@@ -153,6 +173,7 @@ const MyDonations = () => {
       </div>
 
       {/* Filters */}
+      <div >
       <div className="filters-section">
         <div className="search-box">
           <Search size={20} />
@@ -195,27 +216,44 @@ const MyDonations = () => {
           </div>
         </div>
       </div>
-
-      {/* Summary Stats */}
-      <div className="summary-stats">
-        <div className="stat-item">
-          <span className="stat-value">{donations.length}</span>
-          <span className="stat-label">Total Donations</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-value">{donations.filter(d => d.status === 'delivered').length}</span>
-          <span className="stat-label">Delivered</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-value">{donations.reduce((sum, d) => sum + d.quantity, 0)}</span>
-          <span className="stat-label">Total Servings</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-value">{new Set(donations.map(d => d.ngo)).size}</span>
-          <span className="stat-label">NGOs Helped</span>
-        </div>
       </div>
+       
+      <div className="summary-stats">
+  <div className="stat-item">
+    <span className="stat-value">{donations.length}</span>
+    <span className="stat-label">Total Donations</span>
+  </div>
 
+  <div className="stat-item">
+    <span className="stat-value">
+      {donations.filter(d => d.status === 'delivered').length}
+    </span>
+    <span className="stat-label">Delivered</span>
+  </div>
+
+  <div className="stat-item">
+    <span className="stat-value">
+      {donations
+        .filter(d => d.status === 'taken' || d.status === 'delivered')
+        .reduce((sum, d) => sum + d.servesPeople, 0)}
+    </span>
+    <span className="stat-label">Total Servings</span>
+  </div>
+
+  <div className="stat-item">
+    <span className="stat-value">
+      {new Set(
+        donations
+          .filter(d => d.status === 'taken' || d.status === 'delivered')
+          .map(d => d.ngo)
+          .filter(ngo => ngo !== 'N/A')
+      ).size}
+    </span>
+    <span className="stat-label">NGOs Helped</span>
+  </div>
+</div>
+
+   
       {/* Donations Table */}
       <div className="donations-table-container">
         {filteredDonations.length === 0 ? (
@@ -312,17 +350,34 @@ const MyDonations = () => {
                   <span>{selectedDonation.quantity} servings</span>
                 </div>
                 <div className="detail-item">
-                  <label>Preparation Date:</label>
-                  <span>{new Date(selectedDonation.prepDate).toLocaleDateString()}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Best Before:</label>
-                  <span>{selectedDonation.expiry}</span>
-                </div>
-                <div className="detail-item">
-                  <label>NGO Partner:</label>
-                  <span>{selectedDonation.ngo}</span>
-                </div>
+  <label>Preparation Date:</label>
+  <span>
+    {selectedDonation.prepDate 
+      ? new Date(selectedDonation.prepDate).toLocaleDateString() 
+      : "Not Provided"}
+  </span>
+</div>
+<div className="detail-item">
+  <label>Best Before:</label>
+  <span>
+    {selectedDonation.expiry 
+      ? new Date(selectedDonation.expiry).toLocaleDateString() 
+      : "Not Provided"}
+  </span>
+</div>
+
+<div className="detail-item">
+  <label>NGO Partner:</label>
+  <span>{selectedDonation.ngo}</span>
+</div> 
+<div className="detail-item">
+  <label>NGO Email:</label>
+  <span>{selectedDonation.ngoEmail || "Not Provided"}</span>
+</div>
+<div className="detail-item">
+  <label>NGO Phone:</label>
+  <span>{selectedDonation.ngoPhone || "Not Provided"}</span>
+</div>
                 <div className="detail-item">
                   <label>Status:</label>
                   <div className={`status-badge ${selectedDonation.status}`}>
@@ -338,12 +393,12 @@ const MyDonations = () => {
               </div>
 
               <div className="detail-section">
-                <label>Pickup Location:</label>
-                <div className="location-info">
-                  <MapPin size={16} />
-                  <span>{selectedDonation.pickup}</span>
-                </div>
-              </div>
+  <label>Pickup Location:</label>
+  <div className="location-info">
+    <MapPin size={16} />
+    <span>{selectedDonation.pickup || "Not Provided"}</span>
+  </div>
+</div>
 
               {selectedDonation.images.length > 0 && (
                 <div className="detail-section">
