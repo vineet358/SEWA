@@ -1,6 +1,6 @@
 import Food from "../models/Food.js";
 
-
+// ---------------- MARK EXPIRED FOODS ----------------
 const markExpiredFoods = async () => {
   try {
     await Food.updateMany(
@@ -24,31 +24,40 @@ export const addFood = async (req, res) => {
       quantity,
       servesPeople,
       description,
-      preparedAt,
-      expiryAt,
+      preparedAt: preparedAtRaw,
+      expiryAt: expiryAtRaw,
       pickupAddress,
       images
     } = req.body;
 
-    if (!hotelId || !hotelName || !foodType || !quantity || !servesPeople || !preparedAt || !expiryAt || !pickupAddress) {
+    // Required fields validation
+    if (!hotelId || !hotelName || !foodType || !quantity || !servesPeople || !preparedAtRaw || !pickupAddress) {
       return res.status(400).json({
         message: "Missing required fields",
-        required: ["hotelId", "hotelName", "foodType", "quantity", "servesPeople", "preparedAt", "expiryAt", "pickupAddress"]
+        required: ["hotelId","hotelName","foodType","quantity","servesPeople","preparedAt","pickupAddress"]
       });
     }
 
-    const preparedDate = new Date(preparedAt);
-    const expiryDate = new Date(expiryAt);
-    const currentDate = new Date();
+    // Default shelf-life (in hours) based on food type
+    const shelfLifeMap = {
+      vegan: 24,
+      veg: 12,
+      'non-veg': 6
+    };
+    const [year, month, day] = preparedAtRaw.split('-').map(Number);
+    const [hours, minutes] = req.body.prepTime.split(':').map(Number);
+    const preparedAt = new Date(year, month - 1, day, hours, minutes);
+    // Compute expiryAt automatically if not provided
+    const expiryAt = expiryAtRaw
+      ? new Date(expiryAtRaw)
+      : new Date(preparedAt.getTime() + (shelfLifeMap[foodType] || 6) * 60 * 60 * 1000);
 
-    if (isNaN(preparedDate.getTime()) || isNaN(expiryDate.getTime())) {
-      return res.status(400).json({ message: "Invalid date format" });
-    }
+    const now = new Date();
 
-    if (expiryDate <= preparedDate) {
+    if (expiryAt <= preparedAt) {
       return res.status(400).json({ message: "Best Before must be after Preparation time" });
     }
-    if (expiryDate <= currentDate) {
+    if (expiryAt <= now) {
       return res.status(400).json({ message: "Food has already expired" });
     }
 
@@ -63,8 +72,8 @@ export const addFood = async (req, res) => {
       quantity: Number(quantity),
       servesPeople: Number(servesPeople),
       description,
-      preparedAt: preparedDate,
-      expiryAt: expiryDate,
+      preparedAt,
+      expiryAt,
       pickupAddress,
       images: images || []
     });
