@@ -3,27 +3,25 @@ import Food from "../models/Food.js";
 
 const router = express.Router();
 
-// GET Hotel Dashboard
+
 router.get("/:hotelName/dashboard", async (req, res) => {
   try {
     const { hotelName } = req.params;
-
     const foods = await Food.find({ hotelName });
+    const acceptedFoods = foods.filter(f => f.status === "taken");
 
-    const totalDonations = foods.length;
-    const totalServings = foods.reduce((sum, f) => sum + (f.servesPeople || 0), 0);
-    const ngosServed = [...new Set(foods.filter(f => f.acceptedByNgo).map(f => f.acceptedByNgo))].length;
-    const peopleFed = foods
-      .filter(f => f.status === "taken")
-      .reduce((sum, f) => sum + (f.servesPeople || 0), 0);
+    const totalDonations = acceptedFoods.length; 
+    const totalServings = acceptedFoods.reduce((sum, f) => sum + (f.servesPeople || 0), 0);
+    const ngosServed = [...new Set(acceptedFoods.map(f => f.acceptedByNgo))].length;
+    const peopleFed = totalServings;
 
     const monthlyDonations = Array(12).fill(0);
-    foods.forEach(f => {
+    acceptedFoods.forEach(f => {
       const month = new Date(f.createdAt).getMonth();
       monthlyDonations[month]++;
     });
 
-    const recentDonations = foods
+    const recentDonations = acceptedFoods
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 5)
       .map(f => ({
