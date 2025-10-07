@@ -22,12 +22,14 @@ const FoodRequests = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [requests, setRequests] = useState([]);
 
-  const ngoName = JSON.parse(localStorage.getItem('userInfo'))?.organizationName || 'Unknown NGO';
+  
+const ngoName = JSON.parse(localStorage.getItem('userInfo'))?.ngoName || 'Unknown NGO';
   const ngoId = JSON.parse(localStorage.getItem('userInfo'))?.ngoId;
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/food/available');
+        const res = await axios.get(`http://localhost:5000/api/food/available?ngoId=${ngoId}`);
+
         const mappedRequests = res.data.donations.map(donation => {
           const expiryDate = new Date(donation.expiryAt);
           const currentDate = new Date();
@@ -35,24 +37,24 @@ const FoodRequests = () => {
           const hoursLeft = (expiryDate - currentDate) / (1000 * 60 * 60);
           if (hoursLeft <= 2) urgency = 'high';
           else if (hoursLeft <= 12) urgency = 'medium';
-
           return {
             id: donation._id,
-            hotelName: donation.hotelName,
-            foodType: donation.foodType,
-            servings: donation.servesPeople,
-            description: donation.description,
-            location: donation.pickupAddress,
+            hotelName: donation.hotelName || 'Unknown Hotel',
+            foodType: donation.foodType || 'N/A',
+            servings: donation.servesPeople || 0,
+            description: donation.description || '',
+            location: donation.pickupAddress || '',
             preparedAt: donation.preparedAt,
             expiryAt: donation.expiryAt,
             requestDate: donation.createdAt,
-            status: donation.status, // available / taken / expired
-            phone: donation.phone || 'N/A',
-            email: donation.email || 'N/A',
-            contactPerson: donation.contactPerson || 'N/A',
+            status: donation.status || 'available',
+            phone: donation.hotelId?.phone || 'N/A',
+            email: donation.hotelId?.email || 'N/A',
+            contactPerson: donation.hotelId?.managerName || 'N/A',
             urgency,
             images: donation.images || []
           };
+          
         });
         setRequests(mappedRequests);
       } catch (error) {
@@ -73,13 +75,15 @@ const FoodRequests = () => {
   };
 
   const handleRejectDonation = async (requestId) => {
+    console.log("Rejecting donation:", { requestId, ngoId });
     try {
-      await axios.put(`http://localhost:5000/api/food/${requestId}/reject`);
+      await axios.put(`http://localhost:5000/api/food/${requestId}/reject`, { ngoId });
       setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'expired' } : r));
     } catch (error) {
       console.error('Error rejecting donation:', error);
     }
   };
+  
 
   const filteredRequests = requests.filter(r => {
     const matchesSearch = r.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
