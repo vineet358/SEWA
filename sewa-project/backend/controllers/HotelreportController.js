@@ -1,6 +1,18 @@
 import mongoose from 'mongoose';
 import Food from '../models/Food.js';
 
+
+const markExpiredFoods = async () => {
+  try {
+    await Food.updateMany(
+      { status: "available", expiryAt: { $lte: new Date() } },
+      { status: "expired" }
+    );
+  } catch (err) {
+    console.error("Error marking expired foods:", err);
+  }
+};
+
 export const getReports = async (req, res) => {
   try {
     const { hotelId } = req.params;
@@ -9,7 +21,7 @@ export const getReports = async (req, res) => {
       return res.status(400).json({ message: 'Hotel ID is required' });
     }
 
-    // Convert string hotelId to ObjectId
+
     const objectHotelId = mongoose.Types.ObjectId.isValid(hotelId)
       ? new mongoose.Types.ObjectId(hotelId)
       : null;
@@ -18,18 +30,23 @@ export const getReports = async (req, res) => {
       return res.status(400).json({ message: 'Invalid Hotel ID' });
     }
 
-    const donations = await Food.find({ hotelId: objectHotelId });
-    
-    const totalDonations = donations.length;
-    const totalServings = donations.reduce((sum, d) => sum + (d.servesPeople || 0), 0);
+
+    await markExpiredFoods();
+
+
+    const takenDonations = await Food.find({ hotelId: objectHotelId, status: "taken" });
+
+    // Stats
+    const totalDonations = takenDonations.length;
+    const totalServings = takenDonations.reduce((sum, d) => sum + (d.servesPeople || 0), 0);
     const peopleFed = totalServings;
-    const ngosServed = [...new Set(donations.map(d => d.acceptedByNgo))].length;
+    const ngosServed = [...new Set(takenDonations.map(d => d.acceptedByNgo))].length;
     const avgDonationSize = totalDonations ? Math.round(totalServings / totalDonations) : 0;
 
-    // Map for monthly data
+    // Monthly data
     const getMonthName = (date) => date.toLocaleString('default', { month: 'short' });
     const monthlyDataMap = {};
-    donations.forEach(d => {
+    takenDonations.forEach(d => {
       const month = getMonthName(d.createdAt);
       if (!monthlyDataMap[month]) monthlyDataMap[month] = { donations: 0, servings: 0 };
       monthlyDataMap[month].donations += 1;
@@ -43,7 +60,7 @@ export const getReports = async (req, res) => {
 
     // Food type distribution
     const foodTypeMap = {};
-    donations.forEach(d => {
+    takenDonations.forEach(d => {
       const type = d.foodType || 'Other';
       foodTypeMap[type] = (foodTypeMap[type] || 0) + 1;
     });
@@ -55,7 +72,7 @@ export const getReports = async (req, res) => {
 
     // NGO distribution
     const ngoMap = {};
-    donations.forEach(d => {
+    takenDonations.forEach(d => {
       const ngo = d.acceptedByNgo || 'Unknown';
       if (!ngoMap[ngo]) ngoMap[ngo] = { donations: 0, servings: 0 };
       ngoMap[ngo].donations += 1;
