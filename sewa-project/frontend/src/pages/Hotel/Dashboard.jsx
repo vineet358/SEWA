@@ -209,8 +209,9 @@ const HotelDashboard = () => {
           </button>
           <div className="topbar-actions">
             <div className="user-profile">
-              <div className="user-avatar">H</div>
-              <span>Hotel Partner</span>
+            <div className="user-avatar">{hotelName[0].toUpperCase() }</div>
+              <span>{hotelName}</span>
+
             </div>
           </div>
         </div>
