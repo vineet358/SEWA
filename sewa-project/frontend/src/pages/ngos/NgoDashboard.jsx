@@ -14,7 +14,6 @@ import '../../components/CSS/ngos/NgoDashboard.css';
 import AcceptedDonations from "./AcceptedDonations";
 import FoodRequests from "./FoodRequests";
 import Reports from "./Reports";
-import ProfileSettings from "./ProfileSettings";
 import axios from 'axios';
 
 const NgoDashboard = () => {
@@ -30,7 +29,7 @@ const NgoDashboard = () => {
   // Fetch from localStorage
   const ngoInfo = JSON.parse(localStorage.getItem('userInfo'));
   const ngoId = JSON.parse(localStorage.getItem('userInfo'))?.ngoId;
-  const ngoName = ngoInfo?.organizationName || 'Unknown NGO';
+  const ngoName = ngoInfo?.ngoName || 'Unknown NGO';
 
   useEffect(() => {
     setSidebarOpen(false); 
@@ -61,8 +60,7 @@ const NgoDashboard = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'donations', label: 'Accepted Donations', icon: Heart },
     { id: 'requests', label: 'Food Requests', icon: Users },
-    { id: 'analytics', label: 'Reports', icon: BarChart3 },
-    { id: 'profile', label: 'Profile Settings', icon: User },
+    { id: 'analytics', label: 'Reports', icon: BarChart3 }
   ];
 
   const handleSidebarToggle = () => setSidebarOpen(!sidebarOpen);
@@ -125,7 +123,6 @@ const NgoDashboard = () => {
       case 'donations': return <AcceptedDonations />;
       case 'requests': return <FoodRequests />;
       case 'analytics': return <Reports />;
-      case 'profile': return <ProfileSettings />;
       default: return renderDashboardOverview();
     }
   };
@@ -170,7 +167,7 @@ const NgoDashboard = () => {
           </button>
           <div className="ngo-topbar-actions">
             <div className="ngo-user-profile">
-              <div className="ngo-user-avatar">N</div>
+              <div className="ngo-user-avatar">{ngoName[0].toUpperCase() }</div>
               <span>{ngoName}</span>
             </div>
           </div>
