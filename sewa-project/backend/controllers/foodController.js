@@ -1,11 +1,24 @@
 import Food from "../models/Food.js";
 
+
+const markExpiredFoods = async () => {
+  try {
+    await Food.updateMany(
+      { status: "available", expiryAt: { $lte: new Date() } },
+      { status: "expired" }
+    );
+  } catch (err) {
+    console.error("Error marking expired foods:", err);
+  }
+};
+
+// ---------------- ADD FOOD ----------------
 export const addFood = async (req, res) => {
   try {
-    console.log("Received request body:", req.body); 
+    console.log("Received request body:", req.body);
 
     const {
-     hotelId,
+      hotelId,
       hotelName,
       foodType,
       quantity,
@@ -17,13 +30,13 @@ export const addFood = async (req, res) => {
       images
     } = req.body;
 
-
     if (!hotelId || !hotelName || !foodType || !quantity || !servesPeople || !preparedAt || !expiryAt || !pickupAddress) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "Missing required fields",
         required: ["hotelId", "hotelName", "foodType", "quantity", "servesPeople", "preparedAt", "expiryAt", "pickupAddress"]
       });
     }
+
     const preparedDate = new Date(preparedAt);
     const expiryDate = new Date(expiryAt);
     const currentDate = new Date();
@@ -43,7 +56,6 @@ export const addFood = async (req, res) => {
       return res.status(400).json({ message: "Maximum 4 images allowed" });
     }
 
-
     const newFood = new Food({
       hotelId,
       hotelName,
@@ -58,32 +70,32 @@ export const addFood = async (req, res) => {
     });
 
     const savedFood = await newFood.save();
-    console.log("Food saved successfully:", savedFood); 
+    console.log("Food saved successfully:", savedFood);
 
-    res.status(201).json({ 
-      message: "Food availability added successfully", 
-      food: savedFood 
+    res.status(201).json({
+      message: "Food availability added successfully",
+      food: savedFood
     });
 
   } catch (error) {
     console.error("Error in addFood controller:", error);
-    
 
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({ 
-        message: "Validation Error", 
-        errors: validationErrors 
+      return res.status(400).json({
+        message: "Validation Error",
+        errors: validationErrors
       });
     }
-  res.status(500).json({ 
-      message: "Server Error", 
-      error: error.message 
+
+    res.status(500).json({
+      message: "Server Error",
+      error: error.message
     });
   }
-}
+};
 
-
+// ---------------- DONATION HISTORY FOR HOTEL ----------------
 export const getDonationHistory = async (req, res) => {
   try {
     const { hotelId } = req.params;
@@ -92,7 +104,13 @@ export const getDonationHistory = async (req, res) => {
       return res.status(400).json({ message: "Hotel ID is required" });
     }
 
-    const donations = await Food.find({ hotelId }).sort({ createdAt: -1 }); 
+   
+    await markExpiredFoods();
+
+    const donations = await Food.find({ hotelId })
+      .sort({ createdAt: -1 })
+      .populate("acceptedByNgoId", "organizationName email phone")
+      .lean();
 
     res.json({
       message: "Donation history fetched successfully",
@@ -107,44 +125,60 @@ export const getDonationHistory = async (req, res) => {
   }
 };
 
-export const getAvailableDonations=async(req,res)=>{
-  try{
-    const donations=await Food.find({status:"available"}).sort({createdAt:-1});
+// ---------------- AVAILABLE DONATIONS ----------------
+export const getAvailableDonations = async (req, res) => {
+  try {
+    const { ngoId } = req.query;
+
+    await markExpiredFoods();
+
+    let filter = { status: "available" };
+    if (ngoId) filter.rejectedBy = { $ne: ngoId };
+
+    const donations = await Food.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("hotelId", " phone email  managerName"); 
+    console.log(donations);
     res.json({
-      message:"Available donations fetched successfully",
+      message: "Available donations fetched successfully",
       donations
     });
-  } catch(error){
+  } catch (error) {
     console.error("Error fetching available donations:", error);
     res.status(500).json({
-      message:"Server Error",
-      error:error.message
+      message: "Server Error",
+      error: error.message
     });
   }
 };
 
+
+// ---------------- ACCEPT DONATION ----------------
 export const acceptDonation = async (req, res) => {
   try {
-    const { id } = req.params;             
-    const { ngoId, ngoName } = req.body;  
+    const { id } = req.params; 
+    const { ngoId, ngoName } = req.body;
 
     if (!ngoId || !ngoName) {
       return res.status(400).json({ message: "NGO ID and name are required" });
     }
 
+   
+    await markExpiredFoods();
+
     const food = await Food.findOneAndUpdate(
-      { _id: id, status: "available" },    
+      { _id: id, status: "available" },
       {
         status: "taken",
-        acceptedByNgo: ngoName,             
-        acceptedByNgoId: ngoId,            
-        acceptedAt: new Date(),
+        acceptedByNgo: ngoName,
+        acceptedByNgoId: ngoId,
+        acceptedAt: new Date()
       },
       { new: true }
     );
 
     if (!food) {
-      return res.status(404).json({ message: "Donation not found or already taken" });
+      return res.status(404).json({ message: "Donation not found or already taken/expired" });
     }
 
     res.json({
@@ -160,47 +194,51 @@ export const acceptDonation = async (req, res) => {
   }
 };
 
-
 export const rejectDonation = async (req, res) => {
   try {
     const { id } = req.params;
+    const { ngoId } = req.body;
 
-    const food = await Food.findOneAndUpdate(
-      { _id: id, status: "available" },
-      { status: "expired" },         
-      { new: true }
-    );
+    console.log("🟢 Rejecting donation:", id, "by NGO:", ngoId);
 
-    if (!food) {
-      return res
-        .status(400)
-        .json({ msg: "Food not found or already processed" });
+    const donation = await Food.findById(id);
+    if (!donation) {
+      return res.status(404).json({ message: "Donation not found" });
     }
 
-    res.json({ msg: "Donation rejected", food });
-  } catch (err) {
-    res.status(500).json({ msg: "Server error", error: err.message });
+    // Add NGO to rejectedBy list if not already added
+    if (!donation.rejectedBy.includes(ngoId)) {
+      donation.rejectedBy.push(ngoId);
+      await donation.save();
+    }
+
+    res.status(200).json({ message: "Donation rejected successfully" });
+  } catch (error) {
+    console.error("❌ Error rejecting donation:", error);
+    res.status(500).json({ message: "Server error while rejecting donation" });
   }
 };
 
 
+// ---------------- NGO HISTORY ----------------
 export const getNgoHistory = async (req, res) => {
   try {
-    const { ngoId } = req.params; 
+    const { ngoId } = req.params;
 
     if (!ngoId) {
       return res.status(400).json({ message: "NGO ID is required" });
     }
+    await markExpiredFoods();
 
     const history = await Food.find({
-      acceptedByNgoId: ngoId,      
-      status: "taken",
-    }).sort({ acceptedAt: -1 });
+      acceptedByNgoId: ngoId,
+      status: "taken"
+    })
+      .sort({ acceptedAt: -1 });
 
-    res.json(history);  // returns all donations accepted by this NGO
+    res.json(history);
   } catch (err) {
     console.error("Error fetching NGO history:", err);
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
-
