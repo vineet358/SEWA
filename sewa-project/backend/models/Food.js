@@ -29,9 +29,12 @@ const foodSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  expectedShelfLife: {
+    type: Number, // in hours
+    default: 6,   // default shelf life (auto-chosen by backend)
+  },
   expiryAt: {
-    type: Date,
-    required: true,
+    type: Date,   // auto-calculated from preparedAt + expectedShelfLife
   },
   pickupAddress: {
     type: String,
@@ -46,16 +49,23 @@ const foodSchema = new mongoose.Schema({
     enum: ["available", "taken", "expired"],
     default: "available",
   },
-  acceptedAt: { type: Date, default: null },
-
-  acceptedByNgo: { type: String, default: null },     
-  acceptedByNgoId: { type: mongoose.Schema.Types.ObjectId, ref: "Ngo", default: null }, 
-
-  rejectedBy : [{type: mongoose.Schema.Types.ObjectId, ref: "Ngo"}]
+  acceptedAt: { 
+    type: Date, 
+    default: null 
+  },
+  acceptedByNgo: { 
+    type: String, 
+    default: null 
+  },     
+  acceptedByNgoId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "Ngo", 
+    default: null 
+  }, 
+  rejectedBy: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "Ngo" }
+  ]
 }, { timestamps: true });
-
-
-
 
 function arrayLimit(val) {
   return val.length <= 4;
